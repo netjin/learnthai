@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>欢迎来到 LearnThai</h1>
+    <p>中文用户的泰语词汇学习平台</p>
+
+    {% if current_user.is_authenticated %}
+        <a href="#" class="btn btn-primary btn-large">开始学习</a>
+    {% else %}
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-large">开始使用</a>
+    {% endif %}
+</div>
+
+<div class="features">
+    <div class="feature">
+        <h3>科学记忆</h3>
+        <p>间隔重复算法，优化学习效果</p>
+    </div>
+
+    <div class="feature">
+        <h3>多种题型</h3>
+        <p>闪卡、选择题、听力、拼写练习</p>
+    </div>
+
+    <div class="feature">
+        <h3>进度追踪</h3>
+        <p>详细统计，掌握学习情况</p>
+    </div>
+
+    <div class="feature">
+        <h3>标准发音</h3>
+        <p>泰语音频，提升听说能力</p>
+    </div>
+</div>
+{% endblock %}

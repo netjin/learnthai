@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from config import config
@@ -14,5 +14,14 @@ def create_app(config_name='default'):
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = '请先登录'
+
+    # 注册蓝图
+    from app.routes.auth import auth_bp
+    app.register_blueprint(auth_bp)
+
+    # 主页路由
+    @app.route('/')
+    def index():
+        return render_template('index.html')
 
     return app
