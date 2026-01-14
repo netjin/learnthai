@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}学习 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <!-- 进度条 -->
+    <div class="progress-section">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: {{ (current / total * 100) | round }}%"></div>
+        </div>
+        <span class="progress-text">
+            <span id="current-num">{{ current }}</span> / <span id="total-num">{{ total }}</span>
+        </span>
+    </div>
+
+    <!-- 闪卡 -->
+    <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner" id="flashcard-inner">
+            <!-- 正面：泰语 -->
+            <div class="flashcard-front">
+                <div class="vocab-category" id="vocab-category">{{ vocab.category or '词汇' }}</div>
+                <div class="vocab-thai" id="vocab-thai">{{ vocab.thai_word }}</div>
+                {% if vocab.pronunciation %}
+                <div class="vocab-pronunciation" id="vocab-pronunciation">{{ vocab.pronunciation }}</div>
+                {% endif %}
+                <button class="btn btn-primary show-answer-btn" id="show-answer-btn">显示答案</button>
+            </div>
+
+            <!-- 背面：中文释义 -->
+            <div class="flashcard-back">
+                <div class="vocab-category">{{ vocab.category or '词汇' }}</div>
+                <div class="vocab-thai" id="vocab-thai-back">{{ vocab.thai_word }}</div>
+                {% if vocab.pronunciation %}
+                <div class="vocab-pronunciation" id="vocab-pronunciation-back">{{ vocab.pronunciation }}</div>
+                {% endif %}
+                <div class="vocab-meaning" id="vocab-meaning">{{ vocab.chinese_meaning }}</div>
+
+                <!-- 熟悉度评分按钮 -->
+                <div class="familiarity-buttons">
+                    <p>你对这个词的掌握程度：</p>
+                    <div class="btn-group">
+                        <button class="btn btn-familiarity" data-familiarity="1" title="完全不会">1 不会</button>
+                        <button class="btn btn-familiarity" data-familiarity="2" title="有点印象但想不起来">2 模糊</button>
+                        <button class="btn btn-familiarity" data-familiarity="3" title="想了一会儿才记起来">3 记得</button>
+                        <button class="btn btn-familiarity" data-familiarity="4" title="比较熟悉">4 熟悉</button>
+                        <button class="btn btn-familiarity" data-familiarity="5" title="非常熟练">5 精通</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if vocab.is_new %}
+    <div class="new-word-badge">新词汇</div>
+    {% endif %}
+</div>
+
+<style>
+.learning-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.progress-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #666;
+    font-size: 14px;
+}
+
+.flashcard {
+    perspective: 1000px;
+    height: 400px;
+}
+
+.flashcard-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+}
+
+.flashcard-front,
+.flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+}
+
+.vocab-category {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.vocab-thai {
+    font-size: 48px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.vocab-pronunciation {
+    font-size: 18px;
+    color: #888;
+    margin-bottom: 20px;
+}
+
+.vocab-meaning {
+    font-size: 32px;
+    color: #2196F3;
+    margin: 20px 0;
+    font-weight: 500;
+}
+
+.show-answer-btn {
+    margin-top: 20px;
+    padding: 12px 40px;
+    font-size: 16px;
+}
+
+.familiarity-buttons {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.familiarity-buttons p {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-familiarity {
+    padding: 10px 15px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.btn-familiarity:hover {
+    border-color: #2196F3;
+    background: #f0f7ff;
+}
+
+.btn-familiarity[data-familiarity="1"] { border-color: #f44336; color: #f44336; }
+.btn-familiarity[data-familiarity="2"] { border-color: #ff9800; color: #ff9800; }
+.btn-familiarity[data-familiarity="3"] { border-color: #ffeb3b; color: #f9a825; }
+.btn-familiarity[data-familiarity="4"] { border-color: #8bc34a; color: #689f38; }
+.btn-familiarity[data-familiarity="5"] { border-color: #4caf50; color: #388e3c; }
+
+.btn-familiarity[data-familiarity="1"]:hover { background: #ffebee; }
+.btn-familiarity[data-familiarity="2"]:hover { background: #fff3e0; }
+.btn-familiarity[data-familiarity="3"]:hover { background: #fffde7; }
+.btn-familiarity[data-familiarity="4"]:hover { background: #f1f8e9; }
+.btn-familiarity[data-familiarity="5"]:hover { background: #e8f5e9; }
+
+.new-word-badge {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: #ff9800;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const flashcard = document.getElementById('flashcard');
+    const showAnswerBtn = document.getElementById('show-answer-btn');
+    const familiarityBtns = document.querySelectorAll('.btn-familiarity');
+
+    let startTime = Date.now();
+    let currentVocabId = {{ vocab.id }};
+
+    // 显示答案
+    showAnswerBtn.addEventListener('click', function() {
+        flashcard.classList.add('flipped');
+    });
+
+    // 熟悉度评分按钮
+    familiarityBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const familiarity = parseInt(this.dataset.familiarity);
+            const timeTaken = Math.round((Date.now() - startTime) / 1000);
+
+            // 禁用按钮防止重复点击
+            familiarityBtns.forEach(b => b.disabled = true);
+
+            // 提交答案
+            fetch('/learning/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    vocabulary_id: currentVocabId,
+                    quiz_type: 'flashcard',
+                    familiarity: familiarity,
+                    time_taken: timeTaken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.completed) {
+                        // 学习完成，跳转到总结页面
+                        window.location.href = data.redirect;
+                    } else {
+                        // 加载下一个词汇
+                        loadNextVocab(data);
+                    }
+                } else {
+                    alert('提交失败：' + (data.error || '未知错误'));
+                    familiarityBtns.forEach(b => b.disabled = false);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+                familiarityBtns.forEach(b => b.disabled = false);
+            });
+        });
+    });
+
+    function loadNextVocab(data) {
+        const nextVocab = data.next_vocab;
+
+        // 重置卡片
+        flashcard.classList.remove('flipped');
+
+        // 更新进度
+        document.getElementById('current-num').textContent = data.current;
+        document.getElementById('progress-fill').style.width =
+            (data.current / data.total * 100) + '%';
+
+        // 更新词汇信息（短暂延迟以配合翻转动画）
+        setTimeout(() => {
+            document.getElementById('vocab-thai').textContent = nextVocab.thai_word;
+            document.getElementById('vocab-thai-back').textContent = nextVocab.thai_word;
+            document.getElementById('vocab-meaning').textContent = nextVocab.chinese_meaning;
+
+            const category = nextVocab.category || '词汇';
+            document.querySelectorAll('.vocab-category').forEach(el => {
+                el.textContent = category;
+            });
+
+            const pronunciation = nextVocab.pronunciation || '';
+            const pronElements = document.querySelectorAll('.vocab-pronunciation');
+            pronElements.forEach(el => {
+                el.textContent = pronunciation;
+                el.style.display = pronunciation ? 'block' : 'none';
+            });
+
+            // 更新当前词汇 ID
+            currentVocabId = nextVocab.id;
+
+            // 重置计时器
+            startTime = Date.now();
+
+            // 重新启用按钮
+            familiarityBtns.forEach(b => b.disabled = false);
+
+            // 更新新词汇标识
+            const badge = document.querySelector('.new-word-badge');
+            if (nextVocab.is_new) {
+                if (!badge) {
+                    const newBadge = document.createElement('div');
+                    newBadge.className = 'new-word-badge';
+                    newBadge.textContent = '新词汇';
+                    document.querySelector('.learning-container').appendChild(newBadge);
+                }
+            } else if (badge) {
+                badge.remove();
+            }
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

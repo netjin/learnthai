@@ -6,7 +6,7 @@
     <p>中文用户的泰语词汇学习平台</p>
 
     {% if current_user.is_authenticated %}
-        <a href="#" class="btn btn-primary btn-large">开始学习</a>
+        <a href="{{ url_for('learning.start') }}" class="btn btn-primary btn-large">开始学习</a>
     {% else %}
         <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-large">开始使用</a>
     {% endif %}
