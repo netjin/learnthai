@@ -1,0 +1,311 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}用户详情 - {{ user.username }}{% endblock %}
+{% block page_title %}用户详情{% endblock %}
+
+{% block content %}
+<div class="user-header">
+    <div class="user-info">
+        <h2>{{ user.username }}</h2>
+        <p>{{ user.email }}</p>
+        <div class="badges">
+            <span class="role-badge {% if user.is_admin %}admin{% endif %}">
+                {{ '管理员' if user.is_admin else '普通用户' }}
+            </span>
+            <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                {{ '正常' if user.is_active else '已禁用' }}
+            </span>
+        </div>
+    </div>
+    <div class="user-actions">
+        <form method="POST" action="{{ url_for('admin.user_toggle_active', id=user.id) }}" style="display: inline;">
+            <button type="submit" class="btn {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                {{ '禁用账户' if user.is_active else '启用账户' }}
+            </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin.user_toggle_admin', id=user.id) }}" style="display: inline;">
+            <button type="submit" class="btn {% if user.is_admin %}btn-warning{% else %}btn-primary{% endif %}">
+                {{ '取消管理员' if user.is_admin else '设为管理员' }}
+            </button>
+        </form>
+        <a href="{{ url_for('admin.user_list') }}" class="btn">返回列表</a>
+    </div>
+</div>
+
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_vocab }}</div>
+        <div class="stat-label">学习词汇</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.mastered_vocab }}</div>
+        <div class="stat-label">已掌握</div>
+        <div class="stat-sub">{{ stats.mastered_rate }}%</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_attempts }}</div>
+        <div class="stat-label">总答题</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.accuracy }}%</div>
+        <div class="stat-label">正确率</div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <h3>账户信息</h3>
+    <table class="info-table">
+        <tr>
+            <td>用户ID</td>
+            <td>{{ user.id }}</td>
+        </tr>
+        <tr>
+            <td>注册时间</td>
+            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') if user.created_at else '-' }}</td>
+        </tr>
+        <tr>
+            <td>最后登录</td>
+            <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else '从未登录' }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="detail-section">
+    <h3>最近7天答题趋势</h3>
+    <div class="chart-container">
+        <div class="bar-chart">
+            {% for day in daily_attempts %}
+            <div class="bar-item">
+                <div class="bar" style="height: {{ (day.count / 50 * 100)|int if day.count > 0 else 5 }}%">
+                    <span class="bar-value">{{ day.count }}</span>
+                </div>
+                <span class="bar-label">{{ day.date }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <h3>熟悉度分布</h3>
+    <div class="familiarity-bars">
+        {% for item in familiarity_dist %}
+        <div class="fam-row">
+            <span class="fam-label">等级 {{ item.level }}</span>
+            <div class="fam-bar-container">
+                <div class="fam-bar" style="width: {{ (item.count / stats.total_vocab * 100)|int if stats.total_vocab > 0 else 0 }}%"></div>
+            </div>
+            <span class="fam-count">{{ item.count }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="detail-section">
+    <h3>最近学习的词汇</h3>
+    {% if recent_vocab %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>泰语</th>
+                <th>中文</th>
+                <th>熟悉度</th>
+                <th>复习次数</th>
+                <th>最后复习</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for uv, vocab in recent_vocab %}
+            <tr>
+                <td>{{ vocab.thai_word }}</td>
+                <td>{{ vocab.chinese_meaning }}</td>
+                <td>{{ uv.familiarity_level }}</td>
+                <td>{{ uv.review_count }}</td>
+                <td>{{ uv.last_reviewed.strftime('%Y-%m-%d %H:%M') if uv.last_reviewed else '-' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">该用户暂未学习任何词汇</p>
+    {% endif %}
+</div>
+
+<style>
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.user-info h2 {
+    margin: 0 0 0.5rem 0;
+}
+
+.user-info p {
+    margin: 0 0 1rem 0;
+    color: #666;
+}
+
+.badges {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stat-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2563eb;
+}
+
+.stat-label {
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+.stat-sub {
+    font-size: 0.875rem;
+    color: #999;
+}
+
+.detail-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.detail-section h3 {
+    margin: 0 0 1rem 0;
+    color: #333;
+}
+
+.info-table {
+    width: 100%;
+}
+
+.info-table td {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.info-table td:first-child {
+    color: #666;
+    width: 120px;
+}
+
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    height: 150px;
+    gap: 1rem;
+}
+
+.bar-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bar {
+    width: 100%;
+    background: #2563eb;
+    border-radius: 4px 4px 0 0;
+    min-height: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 4px;
+}
+
+.bar-value {
+    color: white;
+    font-size: 0.75rem;
+}
+
+.bar-label {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.familiarity-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.fam-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fam-label {
+    width: 60px;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.fam-bar-container {
+    flex: 1;
+    height: 20px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fam-bar {
+    height: 100%;
+    background: #10b981;
+    min-width: 4px;
+}
+
+.fam-count {
+    width: 40px;
+    text-align: right;
+    font-size: 0.875rem;
+}
+
+.empty-state {
+    text-align: center;
+    color: #999;
+    padding: 2rem;
+}
+
+.btn-warning {
+    background: #f59e0b;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+</style>
+{% endblock %}

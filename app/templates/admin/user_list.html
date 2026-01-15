@@ -1,0 +1,75 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}用户管理{% endblock %}
+{% block page_title %}用户管理{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <form class="filter-form" method="GET">
+        <input type="text" name="search" placeholder="搜索用户名/邮箱..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary">搜索</button>
+        <a href="{{ url_for('admin.user_list') }}" class="btn">重置</a>
+    </form>
+</div>
+
+<div class="table-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>邮箱</th>
+                <th>注册时间</th>
+                <th>最后登录</th>
+                <th>学习词汇</th>
+                <th>角色</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                <td>{{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else '从未' }}</td>
+                <td>{{ user_vocab_counts.get(user.id, 0) }}</td>
+                <td>
+                    <span class="role-badge {% if user.is_admin %}admin{% endif %}">
+                        {{ '管理员' if user.is_admin else '用户' }}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge {% if user.is_active %}active{% else %}inactive{% endif %}">
+                        {{ '正常' if user.is_active else '禁用' }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.user_detail', id=user.id) }}" class="btn btn-small">详情</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9">暂无用户</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.user_list', page=pagination.prev_num, search=search) }}">&laquo; 上一页</a>
+    {% endif %}
+
+    <span>第 {{ pagination.page }} / {{ pagination.pages }} 页</span>
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.user_list', page=pagination.next_num, search=search) }}">下一页 &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

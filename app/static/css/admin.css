@@ -562,3 +562,17 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* 角色标签 */
+.role-badge {
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    background: #e9ecef;
+    color: #666;
+}
+
+.role-badge.admin {
+    background: #fff3cd;
+    color: #856404;
+}

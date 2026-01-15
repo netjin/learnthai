@@ -182,3 +182,130 @@ def vocabulary_toggle(id):
     db.session.commit()
     flash(f"词汇已{'启用' if vocab.is_active else '禁用'}", 'success')
     return redirect(url_for('admin.vocabulary_list'))
+
+
+@admin_bp.route('/users')
+@admin_required
+def user_list():
+    """用户列表"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+
+    query = User.query
+
+    if search:
+        query = query.filter(
+            db.or_(
+                User.username.contains(search),
+                User.email.contains(search)
+            )
+        )
+
+    pagination = query.order_by(User.created_at.desc()).paginate(page=page, per_page=20)
+
+    # 获取每个用户的学习词汇数
+    user_vocab_counts = {}
+    for user in pagination.items:
+        user_vocab_counts[user.id] = UserVocabulary.query.filter_by(user_id=user.id).count()
+
+    return render_template('admin/user_list.html',
+                          users=pagination.items,
+                          pagination=pagination,
+                          search=search,
+                          user_vocab_counts=user_vocab_counts)
+
+
+@admin_bp.route('/users/<int:id>')
+@admin_required
+def user_detail(id):
+    """用户详情"""
+    user = User.query.get_or_404(id)
+
+    # 学习统计
+    total_vocab = UserVocabulary.query.filter_by(user_id=id).count()
+    mastered_vocab = UserVocabulary.query.filter(
+        UserVocabulary.user_id == id,
+        UserVocabulary.familiarity_level >= 4
+    ).count()
+
+    # 答题统计
+    total_attempts = QuizAttempt.query.filter_by(user_id=id).count()
+    correct_attempts = QuizAttempt.query.filter_by(user_id=id, is_correct=True).count()
+    accuracy = round(correct_attempts * 100 / total_attempts, 1) if total_attempts > 0 else 0
+
+    # 最近7天答题趋势
+    today = datetime.utcnow().date()
+    daily_attempts = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = datetime.combine(day, datetime.min.time())
+        day_end = datetime.combine(day, datetime.max.time())
+        count = QuizAttempt.query.filter(
+            QuizAttempt.user_id == id,
+            QuizAttempt.created_at >= day_start,
+            QuizAttempt.created_at <= day_end
+        ).count()
+        daily_attempts.append({'date': day.strftime('%m-%d'), 'count': count})
+
+    # 熟悉度分布
+    familiarity_dist = []
+    for level in range(6):
+        count = UserVocabulary.query.filter_by(user_id=id, familiarity_level=level).count()
+        familiarity_dist.append({'level': level, 'count': count})
+
+    # 最近学习的词汇
+    recent_vocab = db.session.query(UserVocabulary, Vocabulary).join(
+        Vocabulary, UserVocabulary.vocabulary_id == Vocabulary.id
+    ).filter(UserVocabulary.user_id == id).order_by(
+        UserVocabulary.last_reviewed.desc()
+    ).limit(10).all()
+
+    stats = {
+        'total_vocab': total_vocab,
+        'mastered_vocab': mastered_vocab,
+        'mastered_rate': round(mastered_vocab * 100 / total_vocab, 1) if total_vocab > 0 else 0,
+        'total_attempts': total_attempts,
+        'correct_attempts': correct_attempts,
+        'accuracy': accuracy,
+    }
+
+    return render_template('admin/user_detail.html',
+                          user=user,
+                          stats=stats,
+                          daily_attempts=daily_attempts,
+                          familiarity_dist=familiarity_dist,
+                          recent_vocab=recent_vocab)
+
+
+@admin_bp.route('/users/<int:id>/toggle-active', methods=['POST'])
+@admin_required
+def user_toggle_active(id):
+    """切换用户状态"""
+    user = User.query.get_or_404(id)
+
+    # 不能禁用自己
+    if user.id == current_user.id:
+        flash('不能禁用自己的账户', 'error')
+        return redirect(url_for('admin.user_detail', id=id))
+
+    user.is_active = not user.is_active
+    db.session.commit()
+    flash(f"用户已{'启用' if user.is_active else '禁用'}", 'success')
+    return redirect(url_for('admin.user_detail', id=id))
+
+
+@admin_bp.route('/users/<int:id>/toggle-admin', methods=['POST'])
+@admin_required
+def user_toggle_admin(id):
+    """切换管理员权限"""
+    user = User.query.get_or_404(id)
+
+    # 不能修改自己的权限
+    if user.id == current_user.id:
+        flash('不能修改自己的管理员权限', 'error')
+        return redirect(url_for('admin.user_detail', id=id))
+
+    user.is_admin = not user.is_admin
+    db.session.commit()
+    flash(f"用户{'已设为管理员' if user.is_admin else '已取消管理员权限'}", 'success')
+    return redirect(url_for('admin.user_detail', id=id))
