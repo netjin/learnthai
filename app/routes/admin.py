@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import current_user
 from app.utils.decorators import admin_required
 from app import db
@@ -121,3 +121,64 @@ def vocabulary_list():
                           difficulty=difficulty,
                           status=status,
                           categories=categories)
+
+
+@admin_bp.route('/vocabulary/add', methods=['GET', 'POST'])
+@admin_required
+def vocabulary_add():
+    """添加词汇"""
+    if request.method == 'POST':
+        vocab = Vocabulary(
+            thai_word=request.form['thai_word'].strip(),
+            chinese_meaning=request.form['chinese_meaning'].strip(),
+            pronunciation=request.form.get('pronunciation', '').strip(),
+            category=request.form.get('category', '').strip(),
+            difficulty_level=int(request.form.get('difficulty_level', 1)),
+            example_sentence_thai=request.form.get('example_thai', '').strip(),
+            example_sentence_chinese=request.form.get('example_chinese', '').strip(),
+            is_active=request.form.get('is_active') == 'on'
+        )
+        db.session.add(vocab)
+        db.session.commit()
+        flash('词汇添加成功', 'success')
+        return redirect(url_for('admin.vocabulary_list'))
+
+    categories = db.session.query(Vocabulary.category).distinct().all()
+    categories = [c[0] for c in categories if c[0]]
+    return render_template('admin/vocabulary_form.html', vocab=None, categories=categories)
+
+
+@admin_bp.route('/vocabulary/<int:id>', methods=['GET', 'POST'])
+@admin_required
+def vocabulary_edit(id):
+    """编辑词汇"""
+    vocab = Vocabulary.query.get_or_404(id)
+
+    if request.method == 'POST':
+        vocab.thai_word = request.form['thai_word'].strip()
+        vocab.chinese_meaning = request.form['chinese_meaning'].strip()
+        vocab.pronunciation = request.form.get('pronunciation', '').strip()
+        vocab.category = request.form.get('category', '').strip()
+        vocab.difficulty_level = int(request.form.get('difficulty_level', 1))
+        vocab.example_sentence_thai = request.form.get('example_thai', '').strip()
+        vocab.example_sentence_chinese = request.form.get('example_chinese', '').strip()
+        vocab.is_active = request.form.get('is_active') == 'on'
+
+        db.session.commit()
+        flash('词汇更新成功', 'success')
+        return redirect(url_for('admin.vocabulary_list'))
+
+    categories = db.session.query(Vocabulary.category).distinct().all()
+    categories = [c[0] for c in categories if c[0]]
+    return render_template('admin/vocabulary_form.html', vocab=vocab, categories=categories)
+
+
+@admin_bp.route('/vocabulary/<int:id>/toggle', methods=['POST'])
+@admin_required
+def vocabulary_toggle(id):
+    """切换词汇状态"""
+    vocab = Vocabulary.query.get_or_404(id)
+    vocab.is_active = not vocab.is_active
+    db.session.commit()
+    flash(f"词汇已{'启用' if vocab.is_active else '禁用'}", 'success')
+    return redirect(url_for('admin.vocabulary_list'))
