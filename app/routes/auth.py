@@ -68,6 +68,10 @@ def login():
             flash('用户名或密码错误', 'error')
             return render_template('auth/login.html')
 
+        if not user.is_active:
+            flash('账户已被禁用', 'error')
+            return render_template('auth/login.html')
+
         user.last_login = datetime.utcnow()
         db.session.commit()
 

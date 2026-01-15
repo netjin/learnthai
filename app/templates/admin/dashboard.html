@@ -1,0 +1,111 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}仪表板{% endblock %}
+{% block page_title %}仪表板{% endblock %}
+
+{% block content %}
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_users }}</div>
+        <div class="stat-label">总用户数</div>
+        <div class="stat-sub">今日新增 +{{ stats.new_users_today }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_vocab }}</div>
+        <div class="stat-label">总词汇数</div>
+        <div class="stat-sub">已启用 {{ stats.active_vocab }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.active_users_today }}</div>
+        <div class="stat-label">今日活跃</div>
+        <div class="stat-sub">用户数</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_attempts }}</div>
+        <div class="stat-label">总答题数</div>
+        <div class="stat-sub">今日 +{{ stats.attempts_today }}</div>
+    </div>
+</div>
+
+<div class="charts-row">
+    <div class="chart-card">
+        <h3>每日活跃趋势（最近7天）</h3>
+        <div class="bar-chart">
+            {% set max_count = daily_active|map(attribute='count')|max or 1 %}
+            {% for day in daily_active %}
+            <div class="bar-item">
+                <div class="bar" style="height: {{ (day.count / max_count * 100)|int }}%">
+                    <span class="bar-value">{{ day.count }}</span>
+                </div>
+                <span class="bar-label">{{ day.date }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <h3>词汇掌握度分布</h3>
+        <div class="bar-chart horizontal">
+            {% set max_fam = familiarity_dist|map(attribute='count')|max or 1 %}
+            {% for item in familiarity_dist %}
+            <div class="bar-item-h">
+                <span class="bar-label-h">等级 {{ item.level }}</span>
+                <div class="bar-h" style="width: {{ (item.count / max_fam * 100)|int }}%">
+                    <span class="bar-value-h">{{ item.count }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="tables-row">
+    <div class="table-card">
+        <h3>困难词汇 TOP 5</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>泰语</th>
+                    <th>中文</th>
+                    <th>错误次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vocab in difficult_vocab %}
+                <tr>
+                    <td>{{ vocab.thai_word }}</td>
+                    <td>{{ vocab.chinese_meaning }}</td>
+                    <td>{{ vocab.wrong or 0 }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-card">
+        <h3>热门词汇 TOP 5</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>泰语</th>
+                    <th>中文</th>
+                    <th>学习次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vocab in popular_vocab %}
+                <tr>
+                    <td>{{ vocab.thai_word }}</td>
+                    <td>{{ vocab.chinese_meaning }}</td>
+                    <td>{{ vocab.count }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

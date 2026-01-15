@@ -1,0 +1,76 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ '编辑词汇' if vocab else '添加词汇' }}{% endblock %}
+{% block page_title %}{{ '编辑词汇' if vocab else '添加词汇' }}{% endblock %}
+
+{% block content %}
+<div class="form-card">
+    <form method="POST" class="admin-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="thai_word">泰语词 *</label>
+                <input type="text" id="thai_word" name="thai_word" required
+                       value="{{ vocab.thai_word if vocab else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="chinese_meaning">中文释义 *</label>
+                <input type="text" id="chinese_meaning" name="chinese_meaning" required
+                       value="{{ vocab.chinese_meaning if vocab else '' }}">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="pronunciation">发音</label>
+                <input type="text" id="pronunciation" name="pronunciation"
+                       value="{{ vocab.pronunciation if vocab else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="category">分类</label>
+                <input type="text" id="category" name="category" list="categories"
+                       value="{{ vocab.category if vocab else '' }}">
+                <datalist id="categories">
+                    {% for cat in categories %}
+                    <option value="{{ cat }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="difficulty_level">难度等级</label>
+                <select id="difficulty_level" name="difficulty_level">
+                    {% for i in range(1, 6) %}
+                    <option value="{{ i }}" {% if vocab and vocab.difficulty_level == i %}selected{% endif %}>
+                        {{ i }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_active"
+                           {% if not vocab or vocab.is_active %}checked{% endif %}>
+                    启用此词汇
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="example_thai">例句（泰语）</label>
+            <textarea id="example_thai" name="example_thai" rows="2">{{ vocab.example_sentence_thai if vocab else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="example_chinese">例句（中文）</label>
+            <textarea id="example_chinese" name="example_chinese" rows="2">{{ vocab.example_sentence_chinese if vocab else '' }}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ '保存修改' if vocab else '添加词汇' }}</button>
+            <a href="{{ url_for('admin.vocabulary_list') }}" class="btn">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
