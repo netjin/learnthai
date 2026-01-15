@@ -1,0 +1,92 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}词汇管理{% endblock %}
+{% block page_title %}词汇管理{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <form class="filter-form" method="GET">
+        <input type="text" name="search" placeholder="搜索泰语/中文..." value="{{ search }}">
+        <select name="category">
+            <option value="">全部分类</option>
+            {% for cat in categories %}
+            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+        <select name="difficulty">
+            <option value="">全部难度</option>
+            {% for i in range(1, 6) %}
+            <option value="{{ i }}" {% if difficulty == i|string %}selected{% endif %}>难度 {{ i }}</option>
+            {% endfor %}
+        </select>
+        <select name="status">
+            <option value="">全部状态</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>已启用</option>
+            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>已禁用</option>
+        </select>
+        <button type="submit" class="btn btn-primary">筛选</button>
+        <a href="{{ url_for('admin.vocabulary_list') }}" class="btn">重置</a>
+    </form>
+    <a href="{{ url_for('admin.vocabulary_add') }}" class="btn btn-primary">添加词汇</a>
+</div>
+
+<div class="table-card">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>泰语</th>
+                <th>中文</th>
+                <th>发音</th>
+                <th>分类</th>
+                <th>难度</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for vocab in vocabularies %}
+            <tr>
+                <td>{{ vocab.id }}</td>
+                <td>{{ vocab.thai_word }}</td>
+                <td>{{ vocab.chinese_meaning }}</td>
+                <td>{{ vocab.pronunciation or '-' }}</td>
+                <td>{{ vocab.category or '-' }}</td>
+                <td>{{ vocab.difficulty_level }}</td>
+                <td>
+                    <span class="status-badge {% if vocab.is_active %}active{% else %}inactive{% endif %}">
+                        {{ '启用' if vocab.is_active else '禁用' }}
+                    </span>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.vocabulary_edit', id=vocab.id) }}" class="btn btn-small">编辑</a>
+                    <form action="{{ url_for('admin.vocabulary_toggle', id=vocab.id) }}" method="POST" style="display:inline">
+                        <button type="submit" class="btn btn-small {% if vocab.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                            {{ '禁用' if vocab.is_active else '启用' }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8">暂无词汇</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.vocabulary_list', page=pagination.prev_num, search=search, category=category, difficulty=difficulty, status=status) }}">&laquo; 上一页</a>
+    {% endif %}
+
+    <span>第 {{ pagination.page }} / {{ pagination.pages }} 页</span>
+
+    {% if pagination.has_next %}
+    <a href="{{ url_for('admin.vocabulary_list', page=pagination.next_num, search=search, category=category, difficulty=difficulty, status=status) }}">下一页 &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

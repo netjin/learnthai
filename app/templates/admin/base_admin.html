@@ -18,7 +18,7 @@
                 <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
                     仪表板
                 </a>
-                <a href="#" class="{% if request.endpoint and 'vocabulary' in request.endpoint %}active{% endif %} disabled">
+                <a href="{{ url_for('admin.vocabulary_list') }}" class="{% if request.endpoint and 'vocabulary' in request.endpoint %}active{% endif %}">
                     词汇管理
                 </a>
                 <a href="#" class="{% if request.endpoint and 'user' in request.endpoint %}active{% endif %} disabled">

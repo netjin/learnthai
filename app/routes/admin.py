@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 from flask_login import current_user
 from app.utils.decorators import admin_required
 from app import db
@@ -74,3 +74,50 @@ def dashboard():
                           familiarity_dist=familiarity_dist,
                           difficult_vocab=difficult_vocab,
                           popular_vocab=popular_vocab)
+
+
+@admin_bp.route('/vocabulary')
+@admin_required
+def vocabulary_list():
+    """词汇列表"""
+    page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', '')
+    category = request.args.get('category', '')
+    difficulty = request.args.get('difficulty', '', type=str)
+    status = request.args.get('status', '')
+
+    query = Vocabulary.query
+
+    if search:
+        query = query.filter(
+            db.or_(
+                Vocabulary.thai_word.contains(search),
+                Vocabulary.chinese_meaning.contains(search)
+            )
+        )
+
+    if category:
+        query = query.filter_by(category=category)
+
+    if difficulty:
+        query = query.filter_by(difficulty_level=int(difficulty))
+
+    if status == 'active':
+        query = query.filter_by(is_active=True)
+    elif status == 'inactive':
+        query = query.filter_by(is_active=False)
+
+    pagination = query.order_by(Vocabulary.id.desc()).paginate(page=page, per_page=20)
+
+    # 获取所有分类用于筛选
+    categories = db.session.query(Vocabulary.category).distinct().all()
+    categories = [c[0] for c in categories if c[0]]
+
+    return render_template('admin/vocabulary_list.html',
+                          vocabularies=pagination.items,
+                          pagination=pagination,
+                          search=search,
+                          category=category,
+                          difficulty=difficulty,
+                          status=status,
+                          categories=categories)
