@@ -22,6 +22,9 @@ def create_app(config_name='default'):
     from app.routes.learning import learning_bp
     app.register_blueprint(learning_bp)
 
+    from app.routes.admin import admin_bp
+    app.register_blueprint(admin_bp)
+
     # 主页路由
     @app.route('/')
     def index():
