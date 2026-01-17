@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}选择题 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="learning-container">
+    <!-- 进度条 -->
+    <div class="progress-section">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: {{ (current / total * 100) | round }}%"></div>
+        </div>
+        <span class="progress-text">
+            <span id="current-num">{{ current }}</span> / <span id="total-num">{{ total }}</span>
+        </span>
+    </div>
+
+    <!-- 题目卡片 -->
+    <div class="quiz-card" id="quiz-card">
+        <div class="vocab-category" id="vocab-category">{{ vocab.category or '词汇' }}</div>
+        <div class="vocab-thai" id="vocab-thai">{{ vocab.thai_word }}</div>
+        {% if vocab.pronunciation %}
+        <div class="vocab-pronunciation" id="vocab-pronunciation">{{ vocab.pronunciation }}</div>
+        {% endif %}
+
+        <!-- 选项 -->
+        <div class="options" id="options">
+            {% for option in options %}
+            <button class="option-btn" data-answer="{{ option.text }}" data-correct="{{ option.is_correct | lower }}">
+                <span class="option-letter">{{ ['A', 'B', 'C', 'D'][loop.index0] }}</span>
+                <span class="option-text">{{ option.text }}</span>
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- 反馈区域 -->
+        <div class="feedback" id="feedback" style="display: none;">
+            <div class="feedback-icon" id="feedback-icon"></div>
+            <div class="feedback-text" id="feedback-text"></div>
+            <div class="correct-answer" id="correct-answer"></div>
+            <button class="btn btn-primary next-btn" id="next-btn">下一题</button>
+        </div>
+    </div>
+
+    {% if vocab.is_new %}
+    <div class="new-word-badge" id="new-badge">新词汇</div>
+    {% endif %}
+</div>
+
+<style>
+.learning-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.progress-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #666;
+    font-size: 14px;
+}
+
+.quiz-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 40px 30px;
+    text-align: center;
+}
+
+.vocab-category {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.vocab-thai {
+    font-size: 48px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.vocab-pronunciation {
+    font-size: 18px;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.option-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    font-size: 16px;
+}
+
+.option-btn:hover:not(:disabled) {
+    border-color: #2196F3;
+    background: #f0f7ff;
+}
+
+.option-btn:disabled {
+    cursor: not-allowed;
+}
+
+.option-btn.correct {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+}
+
+.option-btn.wrong {
+    border-color: #f44336;
+    background: #ffebee;
+}
+
+.option-btn.show-correct {
+    border-color: #4CAF50;
+    background: #e8f5e9;
+}
+
+.option-letter {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 50%;
+    font-weight: bold;
+    color: #666;
+}
+
+.option-btn.correct .option-letter {
+    background: #4CAF50;
+    color: white;
+}
+
+.option-btn.wrong .option-letter {
+    background: #f44336;
+    color: white;
+}
+
+.option-text {
+    flex: 1;
+}
+
+.feedback {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.feedback-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.feedback-text {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.feedback.correct .feedback-icon::before { content: '✓'; color: #4CAF50; }
+.feedback.correct .feedback-text { color: #4CAF50; }
+
+.feedback.wrong .feedback-icon::before { content: '✗'; color: #f44336; }
+.feedback.wrong .feedback-text { color: #f44336; }
+
+.correct-answer {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.next-btn {
+    padding: 12px 40px;
+}
+
+.new-word-badge {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: #ff9800;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const optionBtns = document.querySelectorAll('.option-btn');
+    const feedback = document.getElementById('feedback');
+    const feedbackIcon = document.getElementById('feedback-icon');
+    const feedbackText = document.getElementById('feedback-text');
+    const correctAnswerDiv = document.getElementById('correct-answer');
+    const nextBtn = document.getElementById('next-btn');
+
+    let startTime = Date.now();
+    let currentVocabId = {{ vocab.id }};
+    let answered = false;
+
+    // 点击选项
+    optionBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (answered) return;
+            answered = true;
+
+            const selectedAnswer = this.dataset.answer;
+            const timeTaken = Math.round((Date.now() - startTime) / 1000);
+
+            // 禁用所有按钮
+            optionBtns.forEach(b => b.disabled = true);
+
+            // 检查答案
+            fetch('/learning/check-answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    vocabulary_id: currentVocabId,
+                    selected_answer: selectedAnswer,
+                    time_taken: timeTaken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 显示反馈
+                    if (data.is_correct) {
+                        this.classList.add('correct');
+                        feedback.classList.add('correct');
+                        feedback.classList.remove('wrong');
+                        feedbackText.textContent = '回答正确！';
+                        correctAnswerDiv.textContent = '';
+                    } else {
+                        this.classList.add('wrong');
+                        feedback.classList.add('wrong');
+                        feedback.classList.remove('correct');
+                        feedbackText.textContent = '回答错误';
+                        correctAnswerDiv.textContent = '正确答案：' + data.correct_answer;
+
+                        // 高亮正确答案
+                        optionBtns.forEach(b => {
+                            if (b.dataset.answer === data.correct_answer) {
+                                b.classList.add('show-correct');
+                            }
+                        });
+                    }
+                    feedback.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('网络错误，请重试');
+                optionBtns.forEach(b => b.disabled = false);
+                answered = false;
+            });
+        });
+    });
+
+    // 下一题
+    nextBtn.addEventListener('click', function() {
+        fetch('/learning/next', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.completed) {
+                window.location.href = data.redirect;
+            } else {
+                loadNextQuestion(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('网络错误，请重试');
+        });
+    });
+
+    function loadNextQuestion(data) {
+        const vocab = data.vocab;
+        const options = data.options;
+
+        // 更新进度
+        document.getElementById('current-num').textContent = data.current;
+        document.getElementById('progress-fill').style.width = (data.current / data.total * 100) + '%';
+
+        // 更新题目
+        document.getElementById('vocab-thai').textContent = vocab.thai_word;
+        document.getElementById('vocab-category').textContent = vocab.category || '词汇';
+
+        const pronEl = document.getElementById('vocab-pronunciation');
+        if (pronEl) {
+            pronEl.textContent = vocab.pronunciation || '';
+            pronEl.style.display = vocab.pronunciation ? 'block' : 'none';
+        }
+
+        // 更新选项
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+        const letters = ['A', 'B', 'C', 'D'];
+        options.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.dataset.answer = opt.text;
+            btn.dataset.correct = opt.is_correct.toString();
+            btn.innerHTML = `
+                <span class="option-letter">${letters[i]}</span>
+                <span class="option-text">${opt.text}</span>
+            `;
+            btn.addEventListener('click', handleOptionClick);
+            optionsContainer.appendChild(btn);
+        });
+
+        // 重置状态
+        feedback.style.display = 'none';
+        feedback.classList.remove('correct', 'wrong');
+        currentVocabId = vocab.id;
+        startTime = Date.now();
+        answered = false;
+
+        // 更新新词汇标识
+        const badge = document.getElementById('new-badge');
+        if (vocab.is_new) {
+            if (!badge) {
+                const newBadge = document.createElement('div');
+                newBadge.id = 'new-badge';
+                newBadge.className = 'new-word-badge';
+                newBadge.textContent = '新词汇';
+                document.querySelector('.learning-container').appendChild(newBadge);
+            }
+        } else if (badge) {
+            badge.remove();
+        }
+    }
+
+    function handleOptionClick() {
+        if (answered) return;
+        answered = true;
+
+        const selectedAnswer = this.dataset.answer;
+        const timeTaken = Math.round((Date.now() - startTime) / 1000);
+
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+        fetch('/learning/check-answer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vocabulary_id: currentVocabId,
+                selected_answer: selectedAnswer,
+                time_taken: timeTaken
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.is_correct) {
+                    this.classList.add('correct');
+                    feedback.classList.add('correct');
+                    feedback.classList.remove('wrong');
+                    feedbackText.textContent = '回答正确！';
+                    correctAnswerDiv.textContent = '';
+                } else {
+                    this.classList.add('wrong');
+                    feedback.classList.add('wrong');
+                    feedback.classList.remove('correct');
+                    feedbackText.textContent = '回答错误';
+                    correctAnswerDiv.textContent = '正确答案：' + data.correct_answer;
+
+                    document.querySelectorAll('.option-btn').forEach(b => {
+                        if (b.dataset.answer === data.correct_answer) {
+                            b.classList.add('show-correct');
+                        }
+                    });
+                }
+                feedback.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('网络错误');
+            document.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+            answered = false;
+        });
+    }
+});
+</script>
+{% endblock %}

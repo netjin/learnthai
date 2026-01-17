@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}元音学习 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="vowels-page">
+    <div class="page-header">
+        <a href="{{ url_for('alphabet.index') }}" class="back-link">&larr; 返回</a>
+        <h1>泰语元音 สระ</h1>
+        <p>32个元音符号分为短元音、长元音、复合元音等类型</p>
+    </div>
+
+    <div class="vowel-section">
+        <h2 class="section-title short">短元音 <span class="count">{{ short_vowels | length }}个</span></h2>
+        <p class="section-desc">发音时间较短，通常用于单音节词</p>
+        <div class="alphabet-grid">
+            {% for v in short_vowels %}
+            <div class="alphabet-item {% if user_progress.get(v.id) %}learned{% endif %}">
+                <div class="char">{{ v.character }}</div>
+                <div class="name">{{ v.name_thai }}</div>
+                <div class="meaning">{{ v.name_chinese }}</div>
+                <div class="sound">[{{ v.pronunciation }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="vowel-section">
+        <h2 class="section-title long">长元音 <span class="count">{{ long_vowels | length }}个</span></h2>
+        <p class="section-desc">发音时间较长，声音持续更久</p>
+        <div class="alphabet-grid">
+            {% for v in long_vowels %}
+            <div class="alphabet-item {% if user_progress.get(v.id) %}learned{% endif %}">
+                <div class="char">{{ v.character }}</div>
+                <div class="name">{{ v.name_thai }}</div>
+                <div class="meaning">{{ v.name_chinese }}</div>
+                <div class="sound">[{{ v.pronunciation }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="vowel-section">
+        <h2 class="section-title compound">复合元音 <span class="count">{{ compound_vowels | length }}个</span></h2>
+        <p class="section-desc">由两个元音组合而成的发音</p>
+        <div class="alphabet-grid">
+            {% for v in compound_vowels %}
+            <div class="alphabet-item {% if user_progress.get(v.id) %}learned{% endif %}">
+                <div class="char">{{ v.character }}</div>
+                <div class="name">{{ v.name_thai }}</div>
+                <div class="meaning">{{ v.name_chinese }}</div>
+                <div class="sound">[{{ v.pronunciation }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if special_vowels %}
+    <div class="vowel-section">
+        <h2 class="section-title special">特殊元音 <span class="count">{{ special_vowels | length }}个</span></h2>
+        <p class="section-desc">特殊发音规则的元音符号</p>
+        <div class="alphabet-grid">
+            {% for v in special_vowels %}
+            <div class="alphabet-item {% if user_progress.get(v.id) %}learned{% endif %}">
+                <div class="char">{{ v.character }}</div>
+                <div class="name">{{ v.name_thai }}</div>
+                <div class="meaning">{{ v.name_chinese }}</div>
+                <div class="sound">[{{ v.pronunciation }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="practice-cta">
+        <a href="{{ url_for('alphabet.practice', alphabet_type='vowel', mode='flashcard') }}" class="btn btn-primary">闪卡练习</a>
+        <a href="{{ url_for('alphabet.practice', alphabet_type='vowel', mode='multiple_choice') }}" class="btn btn-outline">选择题练习</a>
+    </div>
+</div>
+
+<style>
+.vowels-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #666;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: #9C27B0;
+}
+
+.page-header h1 {
+    margin: 0 0 10px;
+}
+
+.page-header p {
+    color: #666;
+}
+
+.vowel-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+}
+
+.section-title.short { background: #E91E63; }
+.section-title.long { background: #9C27B0; }
+.section-title.compound { background: #673AB7; }
+.section-title.special { background: #3F51B5; }
+
+.section-title .count {
+    font-size: 14px;
+    font-weight: normal;
+    opacity: 0.9;
+}
+
+.section-desc {
+    color: #666;
+    margin: 0 0 16px;
+    font-size: 14px;
+}
+
+.alphabet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.alphabet-item {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px 8px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.alphabet-item:hover {
+    border-color: #9C27B0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.alphabet-item.learned {
+    border-color: #4CAF50;
+    background: #f1f8e9;
+}
+
+.alphabet-item .char {
+    font-size: 32px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.alphabet-item .name {
+    font-size: 10px;
+    color: #666;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alphabet-item .meaning {
+    font-size: 11px;
+    color: #9C27B0;
+    margin-bottom: 2px;
+}
+
+.alphabet-item .sound {
+    font-size: 11px;
+    color: #999;
+}
+
+.practice-cta {
+    text-align: center;
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.btn {
+    padding: 12px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #9C27B0;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #7B1FA2;
+}
+
+.btn-outline {
+    border: 2px solid #ddd;
+    background: white;
+    color: #333;
+}
+
+.btn-outline:hover {
+    border-color: #9C27B0;
+    color: #9C27B0;
+}
+</style>
+{% endblock %}

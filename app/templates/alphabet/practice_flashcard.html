@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}字母练习 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="practice-container">
+    <div class="progress-section">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: {{ (current / total * 100) | round }}%"></div>
+        </div>
+        <span class="progress-text">
+            <span id="current-num">{{ current }}</span> / <span id="total-num">{{ total }}</span>
+        </span>
+    </div>
+
+    <div class="flashcard" id="flashcard">
+        <div class="flashcard-inner" id="flashcard-inner">
+            <div class="flashcard-front">
+                <div class="alphabet-char" id="alphabet-char">{{ alphabet.character }}</div>
+                <div class="alphabet-sound" id="alphabet-sound">[{{ alphabet.sound }}]</div>
+                <button class="btn btn-primary show-answer-btn" id="show-answer-btn">显示答案</button>
+            </div>
+
+            <div class="flashcard-back">
+                <div class="alphabet-char">{{ alphabet.character }}</div>
+                <div class="alphabet-name" id="alphabet-name">{{ alphabet.name_thai }}</div>
+                <div class="alphabet-meaning" id="alphabet-meaning">{{ alphabet.name_chinese }}</div>
+                <div class="alphabet-pron" id="alphabet-pron">{{ alphabet.pronunciation }}</div>
+                {% if alphabet.example_word %}
+                <div class="alphabet-example" id="alphabet-example">
+                    例: {{ alphabet.example_word }} ({{ alphabet.example_meaning }})
+                </div>
+                {% endif %}
+
+                <div class="familiarity-buttons">
+                    <p>你对这个字母的掌握程度：</p>
+                    <div class="btn-group">
+                        <button class="btn btn-familiarity" data-familiarity="1">1 不会</button>
+                        <button class="btn btn-familiarity" data-familiarity="2">2 模糊</button>
+                        <button class="btn btn-familiarity" data-familiarity="3">3 记得</button>
+                        <button class="btn btn-familiarity" data-familiarity="4">4 熟悉</button>
+                        <button class="btn btn-familiarity" data-familiarity="5">5 精通</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.practice-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.progress-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+}
+
+.progress-text { color: #666; font-size: 14px; }
+
+.flashcard {
+    perspective: 1000px;
+    height: 450px;
+}
+
+.flashcard-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+}
+
+.flashcard-front, .flashcard-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+
+.flashcard-back { transform: rotateY(180deg); }
+
+.alphabet-char {
+    font-size: 96px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.alphabet-sound {
+    font-size: 24px;
+    color: #666;
+    margin-bottom: 24px;
+}
+
+.alphabet-name {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.alphabet-meaning {
+    font-size: 28px;
+    color: #2196F3;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.alphabet-pron {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 12px;
+}
+
+.alphabet-example {
+    font-size: 14px;
+    color: #666;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.show-answer-btn {
+    margin-top: 20px;
+    padding: 12px 40px;
+    font-size: 16px;
+}
+
+.familiarity-buttons {
+    margin-top: 16px;
+    text-align: center;
+}
+
+.familiarity-buttons p {
+    margin-bottom: 12px;
+    color: #666;
+    font-size: 14px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-familiarity {
+    padding: 8px 12px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.btn-familiarity:hover { border-color: #2196F3; background: #f0f7ff; }
+.btn-familiarity[data-familiarity="1"] { border-color: #f44336; color: #f44336; }
+.btn-familiarity[data-familiarity="2"] { border-color: #ff9800; color: #ff9800; }
+.btn-familiarity[data-familiarity="3"] { border-color: #ffeb3b; color: #f9a825; }
+.btn-familiarity[data-familiarity="4"] { border-color: #8bc34a; color: #689f38; }
+.btn-familiarity[data-familiarity="5"] { border-color: #4caf50; color: #388e3c; }
+
+.btn { display: inline-block; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.2s; }
+.btn-primary { background: #2196F3; color: white; }
+.btn-primary:hover { background: #1976D2; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const flashcard = document.getElementById('flashcard');
+    const showAnswerBtn = document.getElementById('show-answer-btn');
+    const familiarityBtns = document.querySelectorAll('.btn-familiarity');
+
+    let currentAlphabetId = {{ alphabet.id }};
+
+    showAnswerBtn.addEventListener('click', function() {
+        flashcard.classList.add('flipped');
+    });
+
+    familiarityBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const familiarity = parseInt(this.dataset.familiarity);
+            familiarityBtns.forEach(b => b.disabled = true);
+
+            fetch('/alphabet/practice/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    alphabet_id: currentAlphabetId,
+                    familiarity: familiarity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadNext();
+                }
+            });
+        });
+    });
+
+    function loadNext() {
+        fetch('/alphabet/practice/next', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.completed) {
+                window.location.href = '/alphabet/practice/summary';
+            } else {
+                updateCard(data);
+            }
+        });
+    }
+
+    function updateCard(data) {
+        const a = data.alphabet;
+        flashcard.classList.remove('flipped');
+
+        document.getElementById('current-num').textContent = data.current;
+        document.getElementById('progress-fill').style.width = (data.current / data.total * 100) + '%';
+
+        setTimeout(() => {
+            document.querySelectorAll('.alphabet-char').forEach(el => el.textContent = a.character);
+            document.getElementById('alphabet-sound').textContent = '[' + a.sound + ']';
+            document.getElementById('alphabet-name').textContent = a.name_thai;
+            document.getElementById('alphabet-meaning').textContent = a.name_chinese;
+            document.getElementById('alphabet-pron').textContent = a.pronunciation;
+
+            const exampleEl = document.getElementById('alphabet-example');
+            if (exampleEl && a.example_word) {
+                exampleEl.textContent = '例: ' + a.example_word + ' (' + a.example_meaning + ')';
+                exampleEl.style.display = 'block';
+            } else if (exampleEl) {
+                exampleEl.style.display = 'none';
+            }
+
+            currentAlphabetId = a.id;
+            familiarityBtns.forEach(b => b.disabled = false);
+        }, 300);
+    }
+});
+</script>
+{% endblock %}

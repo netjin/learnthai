@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}练习完成 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="summary-container">
+    <div class="summary-card">
+        <div class="summary-icon">🎉</div>
+        <h1>练习完成！</h1>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ completed }}</div>
+                <div class="stat-label">练习字母</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ correct }}</div>
+                <div class="stat-label">掌握数量</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ accuracy }}%</div>
+                <div class="stat-label">正确率</div>
+            </div>
+        </div>
+
+        <div class="summary-actions">
+            <a href="{{ url_for('alphabet.index') }}" class="btn btn-outline">返回字母学习</a>
+            <a href="{{ url_for('alphabet.practice') }}" class="btn btn-primary">继续练习</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.summary-container {
+    max-width: 500px;
+    margin: 60px auto;
+    padding: 20px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 40px;
+    text-align: center;
+}
+
+.summary-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.summary-card h1 {
+    margin: 0 0 32px;
+    color: #333;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.stat-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.summary-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+}
+
+.btn-outline {
+    border: 2px solid #ddd;
+    background: white;
+    color: #333;
+}
+
+.btn-outline:hover {
+    border-color: #2196F3;
+    color: #2196F3;
+}
+</style>
+{% endblock %}

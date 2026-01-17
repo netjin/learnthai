@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}字母学习 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="alphabet-index">
+    <h1>泰语字母学习</h1>
+    <p class="subtitle">掌握44个辅音和32个元音，打好泰语基础</p>
+
+    <div class="alphabet-cards">
+        <div class="alphabet-card consonant">
+            <div class="card-icon">ก</div>
+            <h2>辅音 พยัญชนะ</h2>
+            <p>44个泰语辅音字母</p>
+            <div class="progress-info">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (consonant_learned / consonant_total * 100) | round if consonant_total > 0 else 0 }}%"></div>
+                </div>
+                <span>{{ consonant_learned }} / {{ consonant_total }}</span>
+            </div>
+            <div class="card-actions">
+                <a href="{{ url_for('alphabet.consonants') }}" class="btn btn-outline">浏览字母</a>
+                <a href="{{ url_for('alphabet.practice', alphabet_type='consonant') }}" class="btn btn-primary">开始练习</a>
+            </div>
+        </div>
+
+        <div class="alphabet-card vowel">
+            <div class="card-icon">า</div>
+            <h2>元音 สระ</h2>
+            <p>32个泰语元音符号</p>
+            <div class="progress-info">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ (vowel_learned / vowel_total * 100) | round if vowel_total > 0 else 0 }}%"></div>
+                </div>
+                <span>{{ vowel_learned }} / {{ vowel_total }}</span>
+            </div>
+            <div class="card-actions">
+                <a href="{{ url_for('alphabet.vowels') }}" class="btn btn-outline">浏览字母</a>
+                <a href="{{ url_for('alphabet.practice', alphabet_type='vowel') }}" class="btn btn-primary">开始练习</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="practice-modes">
+        <h3>练习模式</h3>
+        <div class="mode-options">
+            <a href="{{ url_for('alphabet.practice', alphabet_type='all', mode='flashcard') }}" class="mode-btn">
+                <span class="mode-icon">📇</span>
+                <span>闪卡练习</span>
+            </a>
+            <a href="{{ url_for('alphabet.practice', alphabet_type='all', mode='multiple_choice') }}" class="mode-btn">
+                <span class="mode-icon">✅</span>
+                <span>选择题</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.alphabet-index {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.alphabet-index h1 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 40px;
+}
+
+.alphabet-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.alphabet-card {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.card-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.alphabet-card.consonant .card-icon { color: #2196F3; }
+.alphabet-card.vowel .card-icon { color: #9C27B0; }
+
+.alphabet-card h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.alphabet-card p {
+    color: #666;
+    margin: 0 0 20px;
+}
+
+.progress-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+}
+
+.card-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 10px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+}
+
+.btn-outline {
+    border: 2px solid #ddd;
+    background: white;
+    color: #333;
+}
+
+.btn-outline:hover {
+    border-color: #2196F3;
+    color: #2196F3;
+}
+
+.practice-modes {
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 12px;
+}
+
+.practice-modes h3 {
+    margin: 0 0 16px;
+    color: #333;
+}
+
+.mode-options {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.mode-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 32px;
+    background: white;
+    border-radius: 12px;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.mode-icon {
+    font-size: 24px;
+}
+</style>
+{% endblock %}
