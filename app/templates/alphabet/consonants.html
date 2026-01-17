@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}辅音学习 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="consonants-page">
+    <div class="page-header">
+        <a href="{{ url_for('alphabet.index') }}" class="back-link">&larr; 返回</a>
+        <h1>泰语辅音 พยัญชนะ</h1>
+        <p>44个辅音分为中辅音、高辅音、低辅音三类</p>
+    </div>
+
+    <div class="consonant-section">
+        <h2 class="section-title mid">中辅音 อักษรกลาง <span class="count">{{ mid_consonants | length }}个</span></h2>
+        <p class="section-desc">发音时声带振动适中，声调变化规律简单</p>
+        <div class="alphabet-grid">
+            {% for c in mid_consonants %}
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+                <div class="char">{{ c.character }}</div>
+                <div class="name">{{ c.name_thai }}</div>
+                <div class="meaning">{{ c.name_chinese }}</div>
+                <div class="sound">[{{ c.sound }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="consonant-section">
+        <h2 class="section-title high">高辅音 อักษรสูง <span class="count">{{ high_consonants | length }}个</span></h2>
+        <p class="section-desc">发音时气流较强，通常带有送气音</p>
+        <div class="alphabet-grid">
+            {% for c in high_consonants %}
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+                <div class="char">{{ c.character }}</div>
+                <div class="name">{{ c.name_thai }}</div>
+                <div class="meaning">{{ c.name_chinese }}</div>
+                <div class="sound">[{{ c.sound }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="consonant-section">
+        <h2 class="section-title low">低辅音 อักษรต่ำ <span class="count">{{ low_consonants | length }}个</span></h2>
+        <p class="section-desc">发音时声带振动较低沉</p>
+        <div class="alphabet-grid">
+            {% for c in low_consonants %}
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+                <div class="char">{{ c.character }}</div>
+                <div class="name">{{ c.name_thai }}</div>
+                <div class="meaning">{{ c.name_chinese }}</div>
+                <div class="sound">[{{ c.sound }}]</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="practice-cta">
+        <a href="{{ url_for('alphabet.practice', alphabet_type='consonant', mode='flashcard') }}" class="btn btn-primary">闪卡练习</a>
+        <a href="{{ url_for('alphabet.practice', alphabet_type='consonant', mode='multiple_choice') }}" class="btn btn-outline">选择题练习</a>
+    </div>
+</div>
+
+<style>
+.consonants-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #666;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: #2196F3;
+}
+
+.page-header h1 {
+    margin: 0 0 10px;
+}
+
+.page-header p {
+    color: #666;
+}
+
+.consonant-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    color: white;
+}
+
+.section-title.mid { background: #4CAF50; }
+.section-title.high { background: #FF9800; }
+.section-title.low { background: #2196F3; }
+
+.section-title .count {
+    font-size: 14px;
+    font-weight: normal;
+    opacity: 0.9;
+}
+
+.section-desc {
+    color: #666;
+    margin: 0 0 16px;
+    font-size: 14px;
+}
+
+.alphabet-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.alphabet-item {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px 8px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.alphabet-item:hover {
+    border-color: #2196F3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.alphabet-item.learned {
+    border-color: #4CAF50;
+    background: #f1f8e9;
+}
+
+.alphabet-item .char {
+    font-size: 36px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.alphabet-item .name {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.alphabet-item .meaning {
+    font-size: 12px;
+    color: #2196F3;
+    margin-bottom: 2px;
+}
+
+.alphabet-item .sound {
+    font-size: 11px;
+    color: #999;
+}
+
+.practice-cta {
+    text-align: center;
+    padding: 24px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.btn {
+    padding: 12px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #2196F3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976D2;
+}
+
+.btn-outline {
+    border: 2px solid #ddd;
+    background: white;
+    color: #333;
+}
+
+.btn-outline:hover {
+    border-color: #2196F3;
+    color: #2196F3;
+}
+</style>
+{% endblock %}

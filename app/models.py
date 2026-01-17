@@ -95,3 +95,52 @@ class QuizAttempt(db.Model):
 
     def __repr__(self):
         return f'<QuizAttempt user={self.user_id} correct={self.is_correct}>'
+
+
+class ThaiAlphabet(db.Model):
+    """泰语字母表（辅音和元音）"""
+    __tablename__ = 'thai_alphabets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    character = db.Column(db.String(10), nullable=False)  # 字母符号
+    name_thai = db.Column(db.String(50))                   # 泰语名称（如 ก ไก่）
+    name_chinese = db.Column(db.String(50))                # 中文名称（如 鸡）
+    pronunciation = db.Column(db.String(50))               # 罗马音（如 ko kai）
+    sound = db.Column(db.String(20))                       # 音值（如 k）
+    alphabet_type = db.Column(db.String(20), nullable=False)  # consonant/vowel
+    consonant_class = db.Column(db.String(10))             # high/mid/low（仅辅音）
+    vowel_type = db.Column(db.String(20))                  # short/long（仅元音）
+    example_word = db.Column(db.String(50))                # 示例词
+    example_meaning = db.Column(db.String(50))             # 示例词中文
+    audio_file = db.Column(db.String(200))                 # 音频路径
+    sort_order = db.Column(db.Integer, default=0)          # 排序
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # 关系
+    user_progress = db.relationship('UserAlphabet', backref='alphabet', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<ThaiAlphabet {self.character}>'
+
+
+class UserAlphabet(db.Model):
+    """用户字母学习进度"""
+    __tablename__ = 'user_alphabets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    alphabet_id = db.Column(db.Integer, db.ForeignKey('thai_alphabets.id'), nullable=False)
+    familiarity_level = db.Column(db.Integer, default=0)  # 0-5
+    next_review_date = db.Column(db.DateTime)
+    review_count = db.Column(db.Integer, default=0)
+    correct_count = db.Column(db.Integer, default=0)
+    last_reviewed = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'alphabet_id', name='unique_user_alphabet'),
+    )
+
+    def __repr__(self):
+        return f'<UserAlphabet user={self.user_id} alphabet={self.alphabet_id}>'
