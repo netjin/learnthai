@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}排序练习 - {{ conversation.title_chinese }}{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="practice-header">
+        <h1>排序练习</h1>
+        <p class="practice-subtitle">{{ conversation.title_chinese }}</p>
+        <p class="instruction">拖动对话句子，按正确顺序排列</p>
+    </div>
+
+    <div class="practice-container">
+        <div id="sortable-list" class="sortable-list">
+            {% for line in shuffled_lines %}
+            <div class="sortable-item" draggable="true" data-id="{{ line.id }}">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="line-content">
+                    <div class="speaker-label">{{ line.speaker }}</div>
+                    <div class="text-thai">{{ line.text_thai }}</div>
+                    <div class="text-chinese">{{ line.text_chinese }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="practice-actions">
+            <button onclick="checkOrder()" class="btn btn-primary btn-large">检查顺序</button>
+            <button onclick="resetOrder()" class="btn btn-secondary">重新开始</button>
+            <a href="{{ url_for('conversation.view', conversation_id=conversation.id) }}" class="btn">返回对话</a>
+        </div>
+
+        <div id="result" class="result-box" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    const conversationId = {{ conversation.id }};
+    const correctOrder = {{ correct_order | tojson }};
+    const initialOrder = {{ shuffled_lines | map(attribute = 'id') | list | tojson }};
+
+    let draggedElement = null;
+
+    // 初始化拖拽功能
+    document.addEventListener('DOMContentLoaded', function () {
+        const items = document.querySelectorAll('.sortable-item');
+
+        items.forEach(item => {
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('drop', handleDrop);
+            item.addEventListener('dragend', handleDragEnd);
+        });
+    });
+
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+
+        const afterElement = getDragAfterElement(e.clientY);
+        const container = document.getElementById('sortable-list');
+
+        if (afterElement == null) {
+            container.appendChild(draggedElement);
+        } else {
+            container.insertBefore(draggedElement, afterElement);
+        }
+
+        return false;
+    }
+
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+
+        // 移除所有over类
+        document.querySelectorAll('.sortable-item').forEach(item => {
+            item.classList.remove('over');
+        });
+    }
+
+    function getDragAfterElement(y) {
+        const draggableElements = [...document.querySelectorAll('.sortable-item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function getCurrentOrder() {
+        const items = document.querySelectorAll('.sortable-item');
+        return Array.from(items).map(item => parseInt(item.dataset.id));
+    }
+
+    function checkOrder() {
+        const userOrder = getCurrentOrder();
+
+        fetch('/conversation/check-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                user_order: userOrder,
+                correct_order: correctOrder
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResult(data.is_correct, userOrder, data.correct_order);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('检查顺序时出错');
+            });
+    }
+
+    function displayResult(isCorrect, userOrder, correctOrder) {
+        const resultBox = document.getElementById('result');
+        resultBox.style.display = 'block';
+
+        if (isCorrect) {
+            resultBox.innerHTML = `
+            <h3>🎉 完全正确！</h3>
+            <p class="result-excellent">你已经完全掌握了这段对话的顺序！</p>
+        `;
+            resultBox.className = 'result-box result-success';
+        } else {
+            // 标记错误位置
+            const items = document.querySelectorAll('.sortable-item');
+            items.forEach((item, index) => {
+                item.classList.remove('correct-position', 'wrong-position');
+                if (parseInt(item.dataset.id) === correctOrder[index]) {
+                    item.classList.add('correct-position');
+                } else {
+                    item.classList.add('wrong-position');
+                }
+            });
+
+            resultBox.innerHTML = `
+            <h3>还不太对</h3>
+            <p class="result-retry">绿色边框表示位置正确，红色边框表示位置错误</p>
+            <p>再试一次吧！</p>
+        `;
+            resultBox.className = 'result-box result-error';
+        }
+
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function resetOrder() {
+        // 重新打乱顺序
+        const container = document.getElementById('sortable-list');
+        const items = Array.from(container.children);
+
+        // Fisher-Yates shuffle
+        for (let i = items.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            container.appendChild(items[j]);
+        }
+
+        // 清除结果和标记
+        document.getElementById('result').style.display = 'none';
+        items.forEach(item => {
+            item.classList.remove('correct-position', 'wrong-position');
+        });
+    }
+</script>
+
+<style>
+    .practice-header .instruction {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+        margin-top: 0.5rem;
+    }
+
+    .sortable-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        min-height: 200px;
+    }
+
+    .sortable-item {
+        display: flex;
+        align-items: center;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: move;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .sortable-item:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .sortable-item.dragging {
+        opacity: 0.5;
+        transform: rotate(2deg);
+    }
+
+    .sortable-item.correct-position {
+        border-color: #2ecc71;
+        background: #d4edda;
+    }
+
+    .sortable-item.wrong-position {
+        border-color: #e74c3c;
+        background: #f8d7da;
+    }
+
+    .drag-handle {
+        font-size: 1.5rem;
+        color: #95a5a6;
+        margin-right: 1rem;
+        cursor: grab;
+        user-select: none;
+    }
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    .line-content {
+        flex: 1;
+    }
+
+    .speaker-label {
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .text-thai {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .text-chinese {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .result-box.result-success {
+        background: #d4edda;
+        border: 2px solid #2ecc71;
+    }
+
+    .result-box.result-error {
+        background: #fff3cd;
+        border: 2px solid #f39c12;
+    }
+
+    @media (max-width: 768px) {
+        .sortable-item {
+            padding: 0.75rem;
+        }
+
+        .drag-handle {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

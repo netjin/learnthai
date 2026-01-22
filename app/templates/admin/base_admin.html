@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
+
 <body class="admin-body">
     <div class="admin-layout">
         <aside class="admin-sidebar">
@@ -15,14 +17,21 @@
                 <span>管理后台</span>
             </div>
             <nav class="admin-nav">
-                <a href="{{ url_for('admin.dashboard') }}" class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <a href="{{ url_for('admin.dashboard') }}"
+                    class="{% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
                     仪表板
                 </a>
-                <a href="{{ url_for('admin.vocabulary_list') }}" class="{% if request.endpoint and 'vocabulary' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('admin.vocabulary_list') }}"
+                    class="{% if request.endpoint and 'vocabulary' in request.endpoint %}active{% endif %}">
                     词汇管理
                 </a>
-                <a href="{{ url_for('admin.user_list') }}" class="{% if request.endpoint and 'user' in request.endpoint %}active{% endif %}">
+                <a href="{{ url_for('admin.user_list') }}"
+                    class="{% if request.endpoint and 'user' in request.endpoint %}active{% endif %}">
                     用户管理
+                </a>
+                <a href="{{ url_for('admin.conversation_scenes') }}"
+                    class="{% if request.endpoint and 'conversation' in request.endpoint %}active{% endif %}">
+                    对话管理
                 </a>
                 <hr>
                 <a href="{{ url_for('index') }}">返回前台</a>
@@ -40,16 +49,16 @@
 
             <div class="admin-content">
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="flash-messages">
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ category }}">
-                                    {{ message }}
-                                    <button class="close" onclick="this.parentElement.remove()">&times;</button>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                        <button class="close" onclick="this.parentElement.remove()">&times;</button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
                 {% endwith %}
 
                 {% block content %}{% endblock %}
@@ -57,4 +66,5 @@
         </main>
     </div>
 </body>
+
 </html>

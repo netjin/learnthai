@@ -350,3 +350,84 @@ footer {
         font-size: 1rem;
     }
 }
+
+/* Thai TTS Speak Button */
+.speak-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 2px solid #2196F3;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #2196F3;
+    padding: 0;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.speak-btn:hover {
+    background: #2196F3;
+    color: white;
+    transform: scale(1.1);
+}
+
+.speak-btn:active {
+    transform: scale(0.95);
+}
+
+.speak-btn svg {
+    display: block;
+}
+
+/* Button sizes */
+.speak-btn-small {
+    width: 28px;
+    height: 28px;
+}
+
+.speak-btn-small svg {
+    width: 16px;
+    height: 16px;
+}
+
+.speak-btn-normal {
+    width: 36px;
+    height: 36px;
+}
+
+.speak-btn-normal svg {
+    width: 20px;
+    height: 20px;
+}
+
+.speak-btn-large {
+    width: 48px;
+    height: 48px;
+}
+
+.speak-btn-large svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* Speaking animation */
+.speak-btn.speaking {
+    animation: pulse 0.5s ease-in-out infinite;
+    background: #2196F3;
+    color: white;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* Thai word with speaker inline */
+.thai-with-speaker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}

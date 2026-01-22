@@ -576,3 +576,25 @@
     background: #fff3cd;
     color: #856404;
 }
+
+/* Section Title */
+.section-title {
+    margin: 10px 0 20px 0;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Conversation Stats Cards */
+.stat-card.conversation .stat-number {
+    color: #9b59b6;
+}
+
+.stat-card.conversation .stat-sub {
+    color: #8e44ad;
+}
+
+/* Conversation Bar Chart */
+.bar-h.conversation {
+    background: linear-gradient(90deg, #9b59b6 0%, #8e44ad 100%);
+}

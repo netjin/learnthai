@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}{{ conversation.title_chinese }} - LearnThai{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="breadcrumb">
+        <a href="{{ url_for('conversation.index') }}">场景列表</a> /
+        <a href="{{ url_for('conversation.scene', scene_id=conversation.scene_id) }}">{{ conversation.scene.name_chinese
+            }}</a> /
+        {{ conversation.title_chinese }}
+    </div>
+
+    <div class="conversation-header">
+        <h1>{{ conversation.title_chinese }}</h1>
+        {% if conversation.title_thai %}
+        <p class="conv-thai-title">{{ conversation.title_thai }}</p>
+        {% endif %}
+        {% if conversation.situation %}
+        <p class="situation-box">{{ conversation.situation }}</p>
+        {% endif %}
+    </div>
+
+    <div class="dialogue-container">
+        {% for line in lines %}
+        <div class="dialogue-bubble {{ 'left' if loop.index % 2 == 1 else 'right' }}">
+            <div class="speaker-label">{{ line.speaker_role }}</div>
+            <div class="bubble-content">
+                <div class="text-thai thai-with-speaker">
+                    <span>{{ line.text_thai }}</span>
+                    <button class="speak-btn speak-btn-small" onclick="speak('{{ line.text_thai }}')" title="朗读">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="text-chinese">{{ line.text_chinese }}</div>
+                {% if line.pronunciation %}
+                <div class="pronunciation">{{ line.pronunciation }}</div>
+                {% endif %}
+                {% if line.notes %}
+                <div class="notes">💡 {{ line.notes }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('conversation.practice', conversation_id=conversation.id, mode='fill_blank') }}"
+            class="btn btn-primary btn-large">
+            开始填空练习
+        </a>
+        <a href="{{ url_for('conversation.practice', conversation_id=conversation.id, mode='order') }}"
+            class="btn btn-primary btn-large">
+            开始排序练习
+        </a>
+        <a href="{{ url_for('conversation.practice', conversation_id=conversation.id, mode='role_play') }}"
+            class="btn btn-primary btn-large">
+            角色扮演
+        </a>
+    </div>
+</div>
+
+<script>
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+        } else {
+            alert('您的浏览器不支持语音合成功能');
+        }
+    }
+</script>
+
+<style>
+    .conversation-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .conv-thai-title {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.5rem;
+        color: #3498db;
+        margin: 0.5rem 0 1.5rem 0;
+    }
+
+    .situation-box {
+        background: #e3f2fd;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+        color: #0c5460;
+        font-style: italic;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .dialogue-container {
+        max-width: 800px;
+        margin: 0 auto 3rem auto;
+        padding: 2rem 0;
+    }
+
+    .dialogue-bubble {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 2rem;
+        max-width: 70%;
+    }
+
+    .dialogue-bubble.left {
+        align-items: flex-start;
+    }
+
+    .dialogue-bubble.right {
+        align-items: flex-end;
+        margin-left: auto;
+    }
+
+    .speaker-label {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .bubble-content {
+        background: white;
+        padding: 1.25rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .dialogue-bubble.left .bubble-content {
+        background: #E3F2FD;
+        border-bottom-left-radius: 4px;
+    }
+
+    .dialogue-bubble.right .bubble-content {
+        background: #F1F8E9;
+        border-bottom-right-radius: 4px;
+    }
+
+    .text-thai {
+        font-size: 1.3rem;
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+    }
+
+    .text-chinese {
+        color: #555;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .pronunciation {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+
+    .notes {
+        margin-top: 0.75rem;
+        padding: 0.5rem;
+        background: rgba(255, 193, 7, 0.1);
+        border-radius: 4px;
+        font-size: 0.85rem;
+        color: #856404;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-top: 3rem;
+    }
+
+    @media (max-width: 768px) {
+        .dialogue-bubble {
+            max-width: 85%;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}填空练习 - {{ conversation.title_chinese }}{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="practice-header">
+        <h1>填空练习</h1>
+        <p class="practice-subtitle">{{ conversation.title_chinese }}</p>
+    </div>
+
+    <div class="practice-container">
+        <div id="exercises">
+            {% for exercise in exercises %}
+            <div class="exercise-item" data-line-id="{{ exercise.line_id }}">
+                <div class="exercise-number">第 {{ loop.index }} 句</div>
+                <div class="speaker-label">{{ exercise.speaker }}</div>
+                <div class="chinese-hint">{{ exercise.chinese }}</div>
+
+                <div class="fill-blank-text">
+                    {% set parts = exercise.text_with_blanks.split('____') %}
+                    {% for part in parts %}
+                    {{ part }}
+                    {% if not loop.last %}
+                    <input type="text" class="blank-input" data-blank-index="{{ loop.index0 }}"
+                        data-answer="{{ exercise.blanks[loop.index0].answer }}" placeholder="____">
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="practice-actions">
+            <button onclick="checkAnswers()" class="btn btn-primary btn-large">检查答案</button>
+            <button onclick="showAnswers()" class="btn btn-secondary">显示答案</button>
+            <a href="{{ url_for('conversation.view', conversation_id=conversation.id) }}" class="btn">返回对话</a>
+        </div>
+
+        <div id="result" class="result-box" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    const conversationId = {{ conversation.id }};
+
+    function checkAnswers() {
+        const exercises = document.querySelectorAll('.exercise-item');
+        const answers = [];
+
+        exercises.forEach(item => {
+            const lineId = item.dataset.lineId;
+            const inputs = item.querySelectorAll('.blank-input');
+            const userAnswers = Array.from(inputs).map(input => input.value.trim());
+
+            answers.push({
+                line_id: parseInt(lineId),
+                user_answers: userAnswers
+            });
+        });
+
+        fetch('/conversation/check-fill-blank', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversation_id: conversationId,
+                answers: answers
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResults(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('检查答案时出错');
+            });
+    }
+
+    function displayResults(data) {
+        const inputs = document.querySelectorAll('.blank-input');
+        let correctCount = 0;
+        let totalCount = 0;
+
+        inputs.forEach(input => {
+            totalCount++;
+            const correctAnswer = input.dataset.answer;
+            const userAnswer = input.value.trim();
+
+            input.classList.remove('correct', 'incorrect');
+
+            if (userAnswer === correctAnswer) {
+                input.classList.add('correct');
+                correctCount++;
+            } else {
+                input.classList.add('incorrect');
+                // 显示正确答案
+                const hint = document.createElement('span');
+                hint.className = 'answer-hint';
+                hint.textContent = ` (正确: ${correctAnswer})`;
+                if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('answer-hint')) {
+                    input.parentNode.insertBefore(hint, input.nextSibling);
+                }
+            }
+        });
+
+        const percentage = Math.round(correctCount / totalCount * 100);
+        const resultBox = document.getElementById('result');
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = `
+        <h3>练习结果</h3>
+        <p class="result-score">正确率: ${percentage}%</p>
+        <p>答对 ${correctCount} / ${totalCount} 个空格</p>
+        ${percentage >= 80 ? '<p class="result-excellent">太棒了！ 🎉</p>' :
+                percentage >= 60 ? '<p class="result-good">不错！继续加油 💪</p>' :
+                    '<p class="result-retry">再试一次吧 📚</p>'}
+    `;
+
+        resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function showAnswers() {
+        const inputs = document.querySelectorAll('.blank-input');
+        inputs.forEach(input => {
+            input.value = input.dataset.answer;
+            input.classList.add('shown');
+        });
+    }
+</script>
+
+<style>
+    .practice-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .practice-subtitle {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .practice-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    #exercises {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .exercise-item {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .exercise-number {
+        display: inline-block;
+        background: #3498db;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .speaker-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .chinese-hint {
+        color: #666;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .fill-blank-text {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.3rem;
+        line-height: 2;
+    }
+
+    .blank-input {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.3rem;
+        padding: 0.25rem 0.5rem;
+        border: none;
+        border-bottom: 2px solid #3498db;
+        background: #f0f8ff;
+        min-width: 100px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .blank-input:focus {
+        outline: none;
+        border-bottom-color: #2980b9;
+        background: #e3f2fd;
+    }
+
+    .blank-input.correct {
+        border-bottom-color: #2ecc71;
+        background: #d4edda;
+    }
+
+    .blank-input.incorrect {
+        border-bottom-color: #e74c3c;
+        background: #f8d7da;
+    }
+
+    .blank-input.shown {
+        border-bottom-color: #f39c12;
+        background: #fff3cd;
+    }
+
+    .answer-hint {
+        color: #e74c3c;
+        font-size: 0.9rem;
+        margin-left: 0.5rem;
+    }
+
+    .practice-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin: 2rem 0;
+    }
+
+    .result-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .result-score {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #3498db;
+        margin: 1rem 0;
+    }
+
+    .result-excellent {
+        color: #2ecc71;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .result-good {
+        color: #f39c12;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .result-retry {
+        color: #e74c3c;
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

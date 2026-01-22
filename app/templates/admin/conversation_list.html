@@ -1,0 +1,93 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}{{ scene.name_chinese }} - 对话列表{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div>
+        <h1>{{ scene.icon }} {{ scene.name_chinese }}</h1>
+        <p class="scene-subtitle">{{ scene.description }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin.conversation_add', scene_id=scene.id) }}" class="btn btn-primary">添加对话</a>
+        <a href="{{ url_for('admin.conversation_scenes') }}" class="btn btn-secondary">返回场景列表</a>
+    </div>
+</div>
+
+<div class="admin-content">
+    {% if conversations %}
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>对话标题</th>
+                <th>泰语标题</th>
+                <th>情境</th>
+                <th>难度</th>
+                <th>排序</th>
+                <th>句子数</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for conv in conversations %}
+            <tr>
+                <td>{{ conv.id }}</td>
+                <td><strong>{{ conv.title_chinese }}</strong></td>
+                <td class="thai-text">{{ conv.title_thai }}</td>
+                <td><small>{{ conv.situation[:30] }}...</small></td>
+                <td>
+                    <span class="badge badge-level-{{ conv.difficulty_level }}">
+                        {{ '★' * conv.difficulty_level }}
+                    </span>
+                </td>
+                <td>{{ conv.sort_order }}</td>
+                <td>{{ conv.line_count }}</td>
+                <td>
+                    {% if conv.is_active %}
+                    <span class="badge badge-success">启用</span>
+                    {% else %}
+                    <span class="badge badge-secondary">禁用</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.conversation_edit', id=conv.id) }}" class="btn btn-sm btn-info">编辑</a>
+                    <form method="POST" action="{{ url_for('admin.conversation_toggle', id=conv.id) }}"
+                        style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            {{ '禁用' if conv.is_active else '启用' }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>该场景暂无对话</p>
+        <a href="{{ url_for('admin.conversation_add', scene_id=scene.id) }}" class="btn btn-primary">添加第一个对话</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .scene-subtitle {
+        color: #666;
+        margin-top: 0.5rem;
+    }
+
+    .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+
+    .admin-header>div:last-child {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}

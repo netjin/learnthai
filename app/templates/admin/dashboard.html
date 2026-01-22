@@ -27,6 +27,30 @@
     </div>
 </div>
 
+<h3 class="section-title">对话学习</h3>
+<div class="stats-cards">
+    <div class="stat-card conversation">
+        <div class="stat-number">{{ conversation_stats.total_scenes }}</div>
+        <div class="stat-label">📚 对话场景</div>
+        <div class="stat-sub">已启用 {{ conversation_stats.active_scenes }} 个</div>
+    </div>
+    <div class="stat-card conversation">
+        <div class="stat-number">{{ conversation_stats.total_conversations }}</div>
+        <div class="stat-label">💬 对话内容</div>
+        <div class="stat-sub">共 {{ conversation_stats.total_lines }} 句</div>
+    </div>
+    <div class="stat-card conversation">
+        <div class="stat-number">{{ conversation_stats.total_practices }}</div>
+        <div class="stat-label">🎯 对话练习</div>
+        <div class="stat-sub">今日 +{{ conversation_stats.practices_today }}</div>
+    </div>
+    <div class="stat-card conversation">
+        <div class="stat-number">{{ conversation_stats.users_learned }}</div>
+        <div class="stat-label">👥 学习人数</div>
+        <div class="stat-sub">今日活跃 {{ conversation_stats.users_today }}</div>
+    </div>
+</div>
+
 <div class="charts-row">
     <div class="chart-card">
         <h3>每日活跃趋势（最近7天）</h3>
@@ -56,6 +80,51 @@
             </div>
             {% endfor %}
         </div>
+    </div>
+</div>
+
+<div class="charts-row">
+    <div class="chart-card">
+        <h3>对话熟练度分布</h3>
+        <div class="bar-chart horizontal">
+            {% set max_conv_fam = conversation_familiarity_dist|map(attribute='count')|max or 1 %}
+            {% for item in conversation_familiarity_dist %}
+            <div class="bar-item-h">
+                <span class="bar-label-h">等级 {{ item.level }}</span>
+                <div class="bar-h conversation" style="width: {{ (item.count / max_conv_fam * 100)|int }}%">
+                    <span class="bar-value-h">{{ item.count }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="table-card">
+        <h3>热门对话 TOP 5</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>场景</th>
+                    <th>对话标题</th>
+                    <th>难度</th>
+                    <th>学习人数</th>
+                    <th>练习次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for conv in popular_conversations %}
+                <tr>
+                    <td>{{ conv.scene_name }}</td>
+                    <td>{{ conv.title_chinese }}</td>
+                    <td>{{ '★' * conv.difficulty_level }}</td>
+                    <td>{{ conv.user_count }}</td>
+                    <td>{{ conv.practice_count }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5">暂无数据</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 

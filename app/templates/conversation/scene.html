@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}{{ scene.name_chinese }} - LearnThai{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="breadcrumb">
+        <a href="{{ url_for('conversation.index') }}">场景列表</a> / {{ scene.name_chinese }}
+    </div>
+
+    <div class="scene-header">
+        <div class="scene-icon-large">{{ scene.icon or '💬' }}</div>
+        <h1>{{ scene.name_chinese }}</h1>
+        {% if scene.name_thai %}
+        <p class="scene-thai-large">{{ scene.name_thai }}</p>
+        {% endif %}
+        <p class="scene-description">{{ scene.description }}</p>
+    </div>
+
+    <div class="conversations-list">
+        {% for conv in conversations %}
+        <div class="conversation-item">
+            <div class="conversation-header">
+                <div class="conversation-title">
+                    <h3>{{ conv.title_chinese }}</h3>
+                    {% if conv.title_thai %}
+                    <p class="conv-thai">{{ conv.title_thai }}</p>
+                    {% endif %}
+                </div>
+                <div class="familiarity-badge familiarity-{{ conv.user_familiarity }}">
+                    {{ '★' * conv.user_familiarity }}{{ '☆' * (5 - conv.user_familiarity) }}
+                </div>
+            </div>
+
+            {% if conv.situation %}
+            <p class="situation">{{ conv.situation }}</p>
+            {% endif %}
+
+            <div class="conversation-actions">
+                <a href="{{ url_for('conversation.view', conversation_id=conv.id) }}" class="btn btn-secondary">
+                    查看对话
+                </a>
+                <a href="{{ url_for('conversation.practice', conversation_id=conv.id, mode='fill_blank') }}"
+                    class="btn btn-practice {{ 'completed' if 'fill_blank' in conv.completed_modes else '' }}">
+                    填空练习 {{ '✓' if 'fill_blank' in conv.completed_modes else '' }}
+                </a>
+                <a href="{{ url_for('conversation.practice', conversation_id=conv.id, mode='order') }}"
+                    class="btn btn-practice {{ 'completed' if 'order' in conv.completed_modes else '' }}">
+                    排序练习 {{ '✓' if 'order' in conv.completed_modes else '' }}
+                </a>
+                <a href="{{ url_for('conversation.practice', conversation_id=conv.id, mode='role_play') }}"
+                    class="btn btn-practice {{ 'completed' if 'role_play' in conv.completed_modes else '' }}">
+                    角色扮演 {{ '✓' if 'role_play' in conv.completed_modes else '' }}
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not conversations %}
+    <div class="empty-state">
+        <p>该场景暂无对话内容</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .breadcrumb {
+        margin-bottom: 2rem;
+        color: #7f8c8d;
+    }
+
+    .breadcrumb a {
+        color: #3498db;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .scene-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .scene-icon-large {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .scene-thai-large {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.5rem;
+        color: #3498db;
+        margin: 0.5rem 0;
+    }
+
+    .conversations-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .conversation-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .conversation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .conversation-title h3 {
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .conv-thai {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        color: #3498db;
+        font-size: 1.1rem;
+    }
+
+    .familiarity-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 1.2rem;
+        white-space: nowrap;
+    }
+
+    .familiarity-0 {
+        background: #ecf0f1;
+        color: #95a5a6;
+    }
+
+    .familiarity-1 {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .familiarity-2 {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .familiarity-3 {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .familiarity-4 {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .familiarity-5 {
+        background: #28a745;
+        color: white;
+    }
+
+    .situation {
+        color: #666;
+        font-style: italic;
+        margin-bottom: 1rem;
+        padding-left: 1rem;
+        border-left: 3px solid #3498db;
+    }
+
+    .conversation-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    .btn-practice {
+        background: #3498db;
+        color: white;
+    }
+
+    .btn-practice:hover {
+        background: #2980b9;
+    }
+
+    .btn-practice.completed {
+        background: #2ecc71;
+    }
+
+    .btn-practice.completed:hover {
+        background: #27ae60;
+    }
+</style>
+{% endblock %}

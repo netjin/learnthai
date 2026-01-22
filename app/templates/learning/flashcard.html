@@ -4,6 +4,13 @@
 
 {% block content %}
 <div class="learning-container">
+    <button class="back-btn" id="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回
+    </button>
+
     <!-- 进度条 -->
     <div class="progress-section">
         <div class="progress-bar">
@@ -20,7 +27,16 @@
             <!-- 正面：泰语 -->
             <div class="flashcard-front">
                 <div class="vocab-category" id="vocab-category">{{ vocab.category or '词汇' }}</div>
-                <div class="vocab-thai" id="vocab-thai">{{ vocab.thai_word }}</div>
+                <div class="thai-with-speaker">
+                    <span class="vocab-thai" id="vocab-thai">{{ vocab.thai_word }}</span>
+                    <button type="button" class="speak-btn speak-btn-large" id="speak-btn-front" title="播放发音">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        </svg>
+                    </button>
+                </div>
                 {% if vocab.pronunciation %}
                 <div class="vocab-pronunciation" id="vocab-pronunciation">{{ vocab.pronunciation }}</div>
                 {% endif %}
@@ -30,7 +46,16 @@
             <!-- 背面：中文释义 -->
             <div class="flashcard-back">
                 <div class="vocab-category">{{ vocab.category or '词汇' }}</div>
-                <div class="vocab-thai" id="vocab-thai-back">{{ vocab.thai_word }}</div>
+                <div class="thai-with-speaker">
+                    <span class="vocab-thai" id="vocab-thai-back">{{ vocab.thai_word }}</span>
+                    <button type="button" class="speak-btn speak-btn-large" id="speak-btn-back" title="播放发音">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        </svg>
+                    </button>
+                </div>
                 {% if vocab.pronunciation %}
                 <div class="vocab-pronunciation" id="vocab-pronunciation-back">{{ vocab.pronunciation }}</div>
                 {% endif %}
@@ -54,6 +79,19 @@
     {% if vocab.is_new %}
     <div class="new-word-badge">新词汇</div>
     {% endif %}
+
+    <!-- 退出确认弹窗 -->
+    <div class="exit-modal-overlay" id="exit-modal">
+        <div class="exit-modal">
+            <div class="exit-modal-icon">⚠️</div>
+            <h3>确定要退出吗？</h3>
+            <p>退出将丢失本次练习进度</p>
+            <div class="exit-modal-buttons">
+                <button class="btn btn-stay" id="btn-stay">坚持一下，就差几分钟了</button>
+                <button class="btn btn-exit" id="btn-exit">坚持退出，一会儿再学</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -62,6 +100,63 @@
     margin: 0 auto;
     padding: 20px;
 }
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 8px 16px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+.back-btn:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
+    color: #2196F3;
+}
+.back-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.exit-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+.exit-modal-overlay.show { display: flex; }
+.exit-modal {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: modalIn 0.3s ease;
+}
+@keyframes modalIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+.exit-modal-icon { font-size: 48px; margin-bottom: 16px; }
+.exit-modal h3 { margin: 0 0 8px; color: #333; }
+.exit-modal p { margin: 0 0 24px; color: #666; }
+.exit-modal-buttons { display: flex; flex-direction: column; gap: 12px; }
+.btn-stay { background: #4CAF50; color: white; padding: 14px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+.btn-stay:hover { background: #43A047; }
+.btn-exit { background: #f5f5f5; color: #666; padding: 14px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+.btn-exit:hover { background: #eee; color: #333; }
 
 .progress-section {
     display: flex;
@@ -234,14 +329,52 @@
 }
 </style>
 
+<script src="{{ url_for('static', filename='js/thai-tts.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const flashcard = document.getElementById('flashcard');
     const showAnswerBtn = document.getElementById('show-answer-btn');
     const familiarityBtns = document.querySelectorAll('.btn-familiarity');
+    const speakBtnFront = document.getElementById('speak-btn-front');
+    const speakBtnBack = document.getElementById('speak-btn-back');
+
+    // 返回按钮和弹窗
+    const backBtn = document.getElementById('back-btn');
+    const exitModal = document.getElementById('exit-modal');
+    const btnStay = document.getElementById('btn-stay');
+    const btnExit = document.getElementById('btn-exit');
+
+    backBtn.addEventListener('click', () => exitModal.classList.add('show'));
+    btnStay.addEventListener('click', () => exitModal.classList.remove('show'));
+    btnExit.addEventListener('click', () => window.history.back());
+    exitModal.addEventListener('click', (e) => {
+        if (e.target === exitModal) exitModal.classList.remove('show');
+    });
 
     let startTime = Date.now();
     let currentVocabId = {{ vocab.id }};
+    let currentThaiWord = "{{ vocab.thai_word }}";
+
+    // 发音功能
+    function speakCurrentWord() {
+        ThaiTTS.speak(currentThaiWord);
+    }
+
+    // 点击发音按钮
+    speakBtnFront.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        speakCurrentWord();
+    });
+
+    speakBtnBack.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        speakCurrentWord();
+    });
+
+    // 页面加载后自动播放发音
+    setTimeout(speakCurrentWord, 500);
 
     // 显示答案
     showAnswerBtn.addEventListener('click', function() {
@@ -322,14 +455,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.style.display = pronunciation ? 'block' : 'none';
             });
 
-            // 更新当前词汇 ID
+            // 更新当前词汇 ID 和泰语单词
             currentVocabId = nextVocab.id;
+            currentThaiWord = nextVocab.thai_word;
 
             // 重置计时器
             startTime = Date.now();
 
             // 重新启用按钮
             familiarityBtns.forEach(b => b.disabled = false);
+
+            // 自动播放新词汇的发音
+            setTimeout(speakCurrentWord, 300);
 
             // 更新新词汇标识
             const badge = document.querySelector('.new-word-badge');

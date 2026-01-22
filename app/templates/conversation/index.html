@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}生活场景对话 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <h1>生活场景对话学习</h1>
+    <p class="subtitle">在真实场景中学习泰语对话</p>
+
+    <div class="scenes-grid">
+        {% for scene in scenes %}
+        <div class="scene-card" onclick="window.location.href='{{ url_for('conversation.scene', scene_id=scene.id) }}'">
+            <div class="scene-icon">{{ scene.icon or '💬' }}</div>
+            <h3>{{ scene.name_chinese }}</h3>
+            {% if scene.name_thai %}
+            <p class="scene-thai">{{ scene.name_thai }}</p>
+            {% endif %}
+            <p class="scene-description">{{ scene.description }}</p>
+
+            <div class="progress-section">
+                <div class="progress-bar">
+                    <div class="progress"
+                        style="width: {{ (scene.completed / scene.total_conversations * 100) if scene.total_conversations > 0 else 0 }}%">
+                    </div>
+                </div>
+                <p class="progress-text">{{ scene.completed }} / {{ scene.total_conversations }} 已掌握</p>
+            </div>
+
+            <div class="difficulty-badge difficulty-{{ scene.difficulty_level }}">
+                难度: {{ '★' * scene.difficulty_level }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not scenes %}
+    <div class="empty-state">
+        <p>暂无可用场景，请联系管理员添加内容。</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .conversation-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .conversation-container h1 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 3rem;
+        font-size: 1.1rem;
+    }
+
+    .scenes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .scene-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .scene-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .scene-icon {
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .scene-card h3 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+
+    .scene-thai {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        text-align: center;
+        color: #3498db;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .scene-description {
+        color: #666;
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+        min-height: 40px;
+    }
+
+    .progress-section {
+        margin-top: 1.5rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #ecf0f1;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transition: width 0.3s;
+    }
+
+    .progress-text {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #7f8c8d;
+    }
+
+    .difficulty-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .difficulty-1 {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .difficulty-2 {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .difficulty-3 {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .difficulty-4 {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .difficulty-5 {
+        background: #f5c6cb;
+        color: #721c24;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #7f8c8d;
+    }
+</style>
+{% endblock %}

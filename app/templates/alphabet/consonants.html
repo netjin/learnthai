@@ -5,7 +5,12 @@
 {% block content %}
 <div class="consonants-page">
     <div class="page-header">
-        <a href="{{ url_for('alphabet.index') }}" class="back-link">&larr; 返回</a>
+        <a href="{{ url_for('alphabet.index') }}" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            返回
+        </a>
         <h1>泰语辅音 พยัญชนะ</h1>
         <p>44个辅音分为中辅音、高辅音、低辅音三类</p>
     </div>
@@ -15,7 +20,15 @@
         <p class="section-desc">发音时声带振动适中，声调变化规律简单</p>
         <div class="alphabet-grid">
             {% for c in mid_consonants %}
-            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}"
+                 data-char="{{ c.character }}"
+                 data-name="{{ c.name_thai }}"
+                 data-meaning="{{ c.name_chinese }}"
+                 data-pron="{{ c.pronunciation }}"
+                 data-sound="{{ c.sound }}"
+                 data-example="{{ c.example_word or '' }}"
+                 data-example-meaning="{{ c.example_meaning or '' }}"
+                 data-class="mid">
                 <div class="char">{{ c.character }}</div>
                 <div class="name">{{ c.name_thai }}</div>
                 <div class="meaning">{{ c.name_chinese }}</div>
@@ -30,7 +43,15 @@
         <p class="section-desc">发音时气流较强，通常带有送气音</p>
         <div class="alphabet-grid">
             {% for c in high_consonants %}
-            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}"
+                 data-char="{{ c.character }}"
+                 data-name="{{ c.name_thai }}"
+                 data-meaning="{{ c.name_chinese }}"
+                 data-pron="{{ c.pronunciation }}"
+                 data-sound="{{ c.sound }}"
+                 data-example="{{ c.example_word or '' }}"
+                 data-example-meaning="{{ c.example_meaning or '' }}"
+                 data-class="high">
                 <div class="char">{{ c.character }}</div>
                 <div class="name">{{ c.name_thai }}</div>
                 <div class="meaning">{{ c.name_chinese }}</div>
@@ -45,13 +66,46 @@
         <p class="section-desc">发音时声带振动较低沉</p>
         <div class="alphabet-grid">
             {% for c in low_consonants %}
-            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}">
+            <div class="alphabet-item {% if user_progress.get(c.id) %}learned{% endif %}"
+                 data-char="{{ c.character }}"
+                 data-name="{{ c.name_thai }}"
+                 data-meaning="{{ c.name_chinese }}"
+                 data-pron="{{ c.pronunciation }}"
+                 data-sound="{{ c.sound }}"
+                 data-example="{{ c.example_word or '' }}"
+                 data-example-meaning="{{ c.example_meaning or '' }}"
+                 data-class="low">
                 <div class="char">{{ c.character }}</div>
                 <div class="name">{{ c.name_thai }}</div>
                 <div class="meaning">{{ c.name_chinese }}</div>
                 <div class="sound">[{{ c.sound }}]</div>
             </div>
             {% endfor %}
+        </div>
+    </div>
+
+    <!-- 学习卡片弹窗 -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-card" id="modal-card">
+            <button class="modal-close" id="modal-close">&times;</button>
+            <div class="modal-content">
+                <div class="modal-char-section">
+                    <span class="modal-char" id="modal-char"></span>
+                    <button type="button" class="speak-btn" id="modal-speak-btn" title="播放发音">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-class-badge" id="modal-class-badge"></div>
+                <div class="modal-sound" id="modal-sound"></div>
+                <div class="modal-name" id="modal-name"></div>
+                <div class="modal-meaning" id="modal-meaning"></div>
+                <div class="modal-pron" id="modal-pron"></div>
+                <div class="modal-example" id="modal-example"></div>
+            </div>
         </div>
     </div>
 
@@ -74,14 +128,29 @@
 }
 
 .back-link {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     margin-bottom: 20px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
     color: #666;
     text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
 }
 
 .back-link:hover {
+    background: #e3f2fd;
+    border-color: #2196F3;
     color: #2196F3;
+}
+
+.back-link svg {
+    width: 16px;
+    height: 16px;
 }
 
 .page-header h1 {
@@ -135,6 +204,7 @@
     padding: 16px 8px;
     text-align: center;
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .alphabet-item:hover {
@@ -212,5 +282,232 @@
     border-color: #2196F3;
     color: #2196F3;
 }
+
+/* Modal 弹窗样式 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 400px;
+    width: 90%;
+    position: relative;
+    animation: modalIn 0.3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.modal-content {
+    text-align: center;
+}
+
+.modal-char-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.modal-char {
+    font-size: 96px;
+    font-weight: bold;
+    color: #333;
+}
+
+.speak-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 2px solid #2196F3;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #2196F3;
+    padding: 0;
+    width: 48px;
+    height: 48px;
+}
+
+.speak-btn:hover {
+    background: #2196F3;
+    color: white;
+    transform: scale(1.1);
+}
+
+.speak-btn svg {
+    width: 28px;
+    height: 28px;
+}
+
+.modal-class-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    color: white;
+    margin-bottom: 16px;
+}
+
+.modal-class-badge.mid { background: #4CAF50; }
+.modal-class-badge.high { background: #FF9800; }
+.modal-class-badge.low { background: #2196F3; }
+
+.modal-sound {
+    font-size: 24px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+.modal-name {
+    font-size: 20px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.modal-meaning {
+    font-size: 32px;
+    color: #2196F3;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.modal-pron {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+.modal-example {
+    font-size: 14px;
+    color: #666;
+    padding: 12px 20px;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+.modal-example:empty {
+    display: none;
+}
 </style>
+
+<script src="{{ url_for('static', filename='js/thai-tts.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalClose = document.getElementById('modal-close');
+    const modalSpeakBtn = document.getElementById('modal-speak-btn');
+    const alphabetItems = document.querySelectorAll('.alphabet-item');
+
+    let currentChar = '';
+
+    // 点击字母卡片
+    alphabetItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const data = this.dataset;
+            currentChar = data.char;
+
+            // 填充弹窗内容
+            document.getElementById('modal-char').textContent = data.char;
+            document.getElementById('modal-sound').textContent = '[' + data.sound + ']';
+            document.getElementById('modal-name').textContent = data.name;
+            document.getElementById('modal-meaning').textContent = data.meaning;
+            document.getElementById('modal-pron').textContent = data.pron;
+
+            const classBadge = document.getElementById('modal-class-badge');
+            classBadge.className = 'modal-class-badge ' + data.class;
+            if (data.class === 'mid') classBadge.textContent = '中辅音';
+            else if (data.class === 'high') classBadge.textContent = '高辅音';
+            else classBadge.textContent = '低辅音';
+
+            const exampleEl = document.getElementById('modal-example');
+            if (data.example) {
+                exampleEl.textContent = '例: ' + data.example + ' (' + data.exampleMeaning + ')';
+            } else {
+                exampleEl.textContent = '';
+            }
+
+            // 显示弹窗
+            modalOverlay.classList.add('show');
+
+            // 自动播放发音
+            setTimeout(() => ThaiTTS.speak(currentChar), 300);
+        });
+    });
+
+    // 关闭弹窗
+    modalClose.addEventListener('click', function() {
+        modalOverlay.classList.remove('show');
+    });
+
+    modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+            modalOverlay.classList.remove('show');
+        }
+    });
+
+    // ESC 关闭弹窗
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modalOverlay.classList.contains('show')) {
+            modalOverlay.classList.remove('show');
+        }
+    });
+
+    // 发音按钮
+    modalSpeakBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        ThaiTTS.speak(currentChar);
+    });
+});
+</script>
 {% endblock %}

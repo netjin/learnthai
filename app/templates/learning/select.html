@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}选择学习类型 - LearnThai{% endblock %}
+
+{% block content %}
+<div class="select-learning">
+    <h1>选择学习类型</h1>
+    <p class="subtitle">请选择您想要学习的内容</p>
+
+    <div class="type-cards">
+        <div class="type-card alphabet">
+            <div class="type-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <text x="4" y="18" font-size="14" fill="currentColor" stroke="none">ก</text>
+                    <text x="12" y="18" font-size="14" fill="currentColor" stroke="none">อ</text>
+                </svg>
+            </div>
+            <h2>字母学习</h2>
+            <p>学习泰语的 44 个辅音和 32 个元音，掌握发音规则</p>
+            <div class="type-stats">
+                <div class="stat">
+                    <span class="value">{{ alphabet_stats.consonants }}</span>
+                    <span class="label">辅音</span>
+                </div>
+                <div class="stat">
+                    <span class="value">{{ alphabet_stats.vowels }}</span>
+                    <span class="label">元音</span>
+                </div>
+                <div class="stat">
+                    <span class="value">{{ alphabet_stats.mastered }}</span>
+                    <span class="label">已掌握</span>
+                </div>
+            </div>
+            <a href="{{ url_for('alphabet.index') }}" class="btn btn-alphabet">进入字母学习</a>
+        </div>
+
+        <div class="type-card vocabulary">
+            <div class="type-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    <line x1="8" y1="7" x2="16" y2="7"/>
+                    <line x1="8" y1="11" x2="14" y2="11"/>
+                </svg>
+            </div>
+            <h2>词汇学习</h2>
+            <p>学习常用泰语词汇，通过闪卡和选择题巩固记忆</p>
+            <div class="type-stats">
+                <div class="stat">
+                    <span class="value">{{ vocab_stats.total }}</span>
+                    <span class="label">总词汇</span>
+                </div>
+                <div class="stat">
+                    <span class="value">{{ vocab_stats.due }}</span>
+                    <span class="label">待复习</span>
+                </div>
+                <div class="stat">
+                    <span class="value">{{ vocab_stats.mastered }}</span>
+                    <span class="label">已掌握</span>
+                </div>
+            </div>
+            <a href="{{ url_for('learning.index') }}" class="btn btn-vocabulary">进入词汇学习</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.select-learning {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.select-learning h1 {
+    font-size: 32px;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 48px;
+}
+
+.type-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 32px;
+}
+
+.type-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px 32px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 2px solid transparent;
+}
+
+.type-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+
+.type-card.alphabet:hover {
+    border-color: #FF9800;
+}
+
+.type-card.vocabulary:hover {
+    border-color: #2196F3;
+}
+
+.type-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.alphabet .type-icon {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    color: #FF9800;
+}
+
+.vocabulary .type-icon {
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #2196F3;
+}
+
+.type-card h2 {
+    font-size: 24px;
+    margin: 0 0 12px;
+    color: #333;
+}
+
+.type-card > p {
+    color: #666;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 24px;
+    min-height: 48px;
+}
+
+.type-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 28px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.type-stats .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.type-stats .value {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.alphabet .type-stats .value {
+    color: #FF9800;
+}
+
+.vocabulary .type-stats .value {
+    color: #2196F3;
+}
+
+.type-stats .label {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 14px 40px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-alphabet {
+    background: linear-gradient(135deg, #FF9800, #F57C00);
+    color: white;
+}
+
+.btn-alphabet:hover {
+    background: linear-gradient(135deg, #F57C00, #E65100);
+    transform: scale(1.02);
+}
+
+.btn-vocabulary {
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    color: white;
+}
+
+.btn-vocabulary:hover {
+    background: linear-gradient(135deg, #1976D2, #1565C0);
+    transform: scale(1.02);
+}
+
+@media (max-width: 600px) {
+    .type-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .type-stats {
+        gap: 16px;
+    }
+
+    .type-stats .value {
+        font-size: 24px;
+    }
+}
+</style>
+{% endblock %}

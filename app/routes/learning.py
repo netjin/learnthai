@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import login_required, current_user
 from app import db
-from app.models import Vocabulary, UserVocabulary, QuizAttempt
+from app.models import Vocabulary, UserVocabulary, QuizAttempt, ThaiAlphabet, UserAlphabet
 from app.utils.srs import calculate_next_review_date
 from datetime import datetime
 import random
@@ -9,6 +9,67 @@ import random
 learning_bp = Blueprint('learning', __name__, url_prefix='/learning')
 
 MAX_SESSION_WORDS = 20
+
+
+@learning_bp.route('/select')
+@login_required
+def select():
+    """学习类型选择页面（字母学习 vs 词汇学习）"""
+    # 字母统计
+    consonant_count = ThaiAlphabet.query.filter_by(alphabet_type='consonant', is_active=True).count()
+    vowel_count = ThaiAlphabet.query.filter_by(alphabet_type='vowel', is_active=True).count()
+    alphabet_mastered = UserAlphabet.query.filter(
+        UserAlphabet.user_id == current_user.id,
+        UserAlphabet.familiarity_level >= 4
+    ).count()
+
+    # 词汇统计
+    total_vocab = Vocabulary.query.filter_by(is_active=True).count()
+    due_vocab = UserVocabulary.query.filter(
+        UserVocabulary.user_id == current_user.id,
+        UserVocabulary.next_review_date <= datetime.utcnow()
+    ).count()
+    vocab_mastered = UserVocabulary.query.filter(
+        UserVocabulary.user_id == current_user.id,
+        UserVocabulary.familiarity_level >= 4
+    ).count()
+
+    return render_template('learning/select.html',
+        alphabet_stats={
+            'consonants': consonant_count,
+            'vowels': vowel_count,
+            'mastered': alphabet_mastered
+        },
+        vocab_stats={
+            'total': total_vocab,
+            'due': due_vocab,
+            'mastered': vocab_mastered
+        }
+    )
+
+
+def generate_true_false(correct_vocab, all_vocab):
+    """生成判断题（50%概率显示正确答案，50%显示错误答案）"""
+    is_correct_pairing = random.choice([True, False])
+
+    if is_correct_pairing:
+        shown_meaning = correct_vocab['chinese_meaning']
+    else:
+        # 选择一个错误的意思
+        other_meanings = [v['chinese_meaning'] for v in all_vocab
+                         if v['chinese_meaning'] != correct_vocab['chinese_meaning']]
+        if other_meanings:
+            shown_meaning = random.choice(other_meanings)
+        else:
+            # 如果没有其他词汇，从数据库获取
+            wrong_vocab = Vocabulary.query.filter(
+                Vocabulary.is_active == True,
+                Vocabulary.chinese_meaning != correct_vocab['chinese_meaning']
+            ).order_by(db.func.random()).first()
+            shown_meaning = wrong_vocab.chinese_meaning if wrong_vocab else correct_vocab['chinese_meaning']
+            is_correct_pairing = True  # 如果找不到错误答案，就显示正确的
+
+    return shown_meaning, is_correct_pairing
 
 
 def generate_options(correct_vocab, all_vocab):
@@ -174,6 +235,16 @@ def start(mode='flashcard'):
             current=1,
             total=len(session_vocab)
         )
+    elif mode == 'true_false':
+        # 判断题模式：生成正确/错误配对
+        shown_meaning, is_correct_pairing = generate_true_false(current_vocab, session_vocab)
+        return render_template('learning/true_false.html',
+            vocab=current_vocab,
+            shown_meaning=shown_meaning,
+            is_correct_pairing=is_correct_pairing,
+            current=1,
+            total=len(session_vocab)
+        )
     else:
         # 闪卡模式
         return render_template('learning/flashcard.html',
@@ -329,6 +400,63 @@ def check_answer():
     })
 
 
+@learning_bp.route('/check-judgment', methods=['POST'])
+@login_required
+def check_judgment():
+    """检查判断题答案"""
+    data = request.get_json()
+    vocab_id = data.get('vocabulary_id')
+    user_answer = data.get('user_answer')  # True = 用户认为正确, False = 用户认为错误
+    is_correct_pairing = data.get('is_correct_pairing')  # 实际是否正确配对
+    time_taken = data.get('time_taken', 0)
+
+    if vocab_id is None or user_answer is None or is_correct_pairing is None:
+        return jsonify({'success': False, 'error': '缺少参数'}), 400
+
+    # 判断用户是否答对
+    is_user_correct = (user_answer == is_correct_pairing)
+
+    # 更新 UserVocabulary
+    uv = UserVocabulary.query.filter_by(
+        user_id=current_user.id,
+        vocabulary_id=vocab_id
+    ).first()
+
+    if uv:
+        if is_user_correct:
+            uv.familiarity_level = min(uv.familiarity_level + 1, 5)
+            uv.correct_count += 1
+        else:
+            uv.familiarity_level = 1  # 答错重置
+        uv.review_count += 1
+        uv.next_review_date = calculate_next_review_date(uv.familiarity_level, uv.review_count)
+        uv.last_reviewed = datetime.utcnow()
+
+    # 记录答题
+    attempt = QuizAttempt(
+        user_id=current_user.id,
+        vocabulary_id=vocab_id,
+        quiz_type='true_false',
+        is_correct=is_user_correct,
+        time_taken=time_taken
+    )
+    db.session.add(attempt)
+    db.session.commit()
+
+    # 更新会话统计
+    stats = session.get('learning_stats', {})
+    stats['completed'] = stats.get('completed', 0) + 1
+    if is_user_correct:
+        stats['correct'] = stats.get('correct', 0) + 1
+        stats['familiar'] = stats.get('familiar', 0) + 1
+    session['learning_stats'] = stats
+
+    return jsonify({
+        'success': True,
+        'is_user_correct': is_user_correct
+    })
+
+
 @learning_bp.route('/next', methods=['POST'])
 @login_required
 def next_vocab():
@@ -346,18 +474,22 @@ def next_vocab():
         })
 
     session['learning_index'] = next_index
-    next_vocab = vocab_list[next_index]
+    next_vocab_item = vocab_list[next_index]
 
     result = {
         'success': True,
         'completed': False,
-        'vocab': next_vocab,
+        'vocab': next_vocab_item,
         'current': next_index + 1,
         'total': len(vocab_list)
     }
 
     if mode == 'multiple_choice':
-        result['options'] = generate_options(next_vocab, vocab_list)
+        result['options'] = generate_options(next_vocab_item, vocab_list)
+    elif mode == 'true_false':
+        shown_meaning, is_correct_pairing = generate_true_false(next_vocab_item, vocab_list)
+        result['shown_meaning'] = shown_meaning
+        result['is_correct_pairing'] = is_correct_pairing
 
     return jsonify(result)
 

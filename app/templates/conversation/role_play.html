@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}角色扮演 - {{ conversation.title_chinese }}{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <div class="practice-header">
+        <h1>角色扮演</h1>
+        <p class="practice-subtitle">{{ conversation.title_chinese }}</p>
+        <p class="instruction">跟读对话，练习发音</p>
+    </div>
+
+    <div class="practice-container">
+        <div class="role-play-controls">
+            <button onclick="startRolePlay()" class="btn btn-primary" id="startBtn">开始练习</button>
+            <button onclick="pauseRolePlay()" class="btn btn-secondary" id="pauseBtn" style="display: none;">暂停</button>
+            <button onclick="resetRolePlay()" class="btn">重新开始</button>
+        </div>
+
+        <div id="dialogue-display" class="dialogue-display">
+            {% for line in lines %}
+            <div class="role-play-line" data-index="{{ loop.index0 }}" data-text="{{ line.text_thai }}">
+                <div class="line-number">{{ loop.index }}</div>
+                <div class="line-content">
+                    <div class="speaker-label">{{ line.speaker_role }}</div>
+                    <div class="text-thai">{{ line.text_thai }}</div>
+                    <div class="text-chinese">{{ line.text_chinese }}</div>
+                    {% if line.pronunciation %}
+                    <div class="pronunciation">{{ line.pronunciation }}</div>
+                    {% endif %}
+                </div>
+                <button class="speak-btn speak-btn-normal" onclick="speakLine('{{ line.text_thai }}', event)">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" />
+                    </svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="progress-indicator">
+            <div class="progress-bar">
+                <div id="progress" class="progress" style="width: 0%"></div>
+            </div>
+            <p id="progress-text">准备开始...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentIndex = 0;
+    let isPlaying = false;
+    let autoPlayInterval = null;
+    const lines = document.querySelectorAll('.role-play-line');
+    const totalLines = lines.length;
+
+    function startRolePlay() {
+        isPlaying = true;
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('pauseBtn').style.display = 'inline-block';
+
+        playCurrentLine();
+    }
+
+    function pauseRolePlay() {
+        isPlaying = false;
+        document.getElementById('startBtn').style.display = 'inline-block';
+        document.getElementById('pauseBtn').style.display = 'none';
+
+        if (autoPlayInterval) {
+            clearTimeout(autoPlayInterval);
+        }
+    }
+
+    function resetRolePlay() {
+        pauseRolePlay();
+        currentIndex = 0;
+        lines.forEach(line => line.classList.remove('active', 'completed'));
+        updateProgress();
+    }
+
+    function playCurrentLine() {
+        if (!isPlaying || currentIndex >= totalLines) {
+            if (currentIndex >= totalLines) {
+                completePractice();
+            }
+            return;
+        }
+
+        // 移除之前的active状态
+        lines.forEach(line => line.classList.remove('active'));
+
+        // 设置当前行为active
+        const currentLine = lines[currentIndex];
+        currentLine.classList.add('active');
+        currentLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // 播放当前行
+        const text = currentLine.dataset.text;
+        speakText(text);
+
+        updateProgress();
+
+        // 3秒后自动播放下一行
+        autoPlayInterval = setTimeout(() => {
+            currentLine.classList.remove('active');
+            currentLine.classList.add('completed');
+            currentIndex++;
+            playCurrentLine();
+        }, 4000);
+    }
+
+    function speakLine(text, event) {
+        event.stopPropagation();
+        speakText(text);
+    }
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            // 停止之前的播放
+            speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+        }
+    }
+
+    function updateProgress() {
+        const percentage = Math.round((currentIndex / totalLines) * 100);
+        document.getElementById('progress').style.width = percentage + '%';
+        document.getElementById('progress-text').textContent =
+            `进度: ${currentIndex} / ${totalLines} (${percentage}%)`;
+    }
+
+    function completePractice() {
+        isPlaying = false;
+        document.getElementById('startBtn').style.display = 'inline-block';
+        document.getElementById('pauseBtn').style.display = 'none';
+        document.getElementById('progress-text').textContent = '练习完成！🎉';
+
+        // 提交练习记录
+        fetch('/conversation/submit-practice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversation_id: {{ conversation.id }},
+            mode: 'role_play',
+            score: 1
+        })
+    });
+}
+</script>
+
+<style>
+    .role-play-controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .dialogue-display {
+        max-width: 800px;
+        margin: 0 auto 2rem auto;
+    }
+
+    .role-play-line {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        opacity: 0.6;
+    }
+
+    .role-play-line.active {
+        opacity: 1;
+        background: #e3f2fd;
+        border-left: 4px solid #3498db;
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+
+    .role-play-line.completed {
+        opacity: 0.8;
+        background: #d4edda;
+        border-left: 4px solid #2ecc71;
+    }
+
+    .line-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: #ecf0f1;
+        border-radius: 50%;
+        font-weight: bold;
+        color: #2c3e50;
+        flex-shrink: 0;
+    }
+
+    .role-play-line.active .line-number {
+        background: #3498db;
+        color: white;
+    }
+
+    .role-play-line.completed .line-number {
+        background: #2ecc71;
+        color: white;
+    }
+
+    .line-content {
+        flex: 1;
+    }
+
+    .speaker-label {
+        font-weight: 500;
+        color: #2c3e50;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .text-thai {
+        font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .text-chinese {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .pronunciation {
+        color: #7f8c8d;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    .progress-indicator {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: #ecf0f1;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 0.75rem;
+    }
+
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transition: width 0.5s ease;
+    }
+
+    #progress-text {
+        text-align: center;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

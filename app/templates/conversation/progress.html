@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}学习进度 - 生活场景对话{% endblock %}
+
+{% block content %}
+<div class="conversation-container">
+    <h1>学习进度</h1>
+
+    <div class="overall-stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_completed }}</div>
+            <div class="stat-label">已掌握对话</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_conversations }}</div>
+            <div class="stat-label">总对话数</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ ((total_completed / total_conversations * 100) | round | int) if
+                total_conversations > 0 else 0 }}%</div>
+            <div class="stat-label">完成率</div>
+        </div>
+    </div>
+
+    <div class="progress-by-scene">
+        <h2>各场景进度</h2>
+        {% for item in progress_data %}
+        <div class="scene-progress-item">
+            <div class="scene-info">
+                <span class="scene-icon">{{ item.scene.icon or '💬' }}</span>
+                <span class="scene-name">{{ item.scene.name_chinese }}</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar">
+                    <div class="progress" style="width: {{ item.percentage }}%"></div>
+                </div>
+                <span class="progress-label">{{ item.completed }} / {{ item.total }} ({{ item.percentage }}%)</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="action-buttons">
+        <a href="{{ url_for('conversation.index') }}" class="btn btn-primary btn-large">继续学习</a>
+    </div>
+</div>
+
+<style>
+    .overall-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0 3rem 0;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #3498db;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 0.95rem;
+    }
+
+    .progress-by-scene {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .progress-by-scene h2 {
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+    }
+
+    .scene-progress-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .scene-progress-item:last-child {
+        border-bottom: none;
+    }
+
+    .scene-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-width: 200px;
+    }
+
+    .scene-icon {
+        font-size: 1.5rem;
+    }
+
+    .scene-name {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .progress-bar-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .progress-bar {
+        flex: 1;
+        height: 12px;
+        background: #ecf0f1;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .progress {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transition: width 0.5s;
+    }
+
+    .progress-label {
+        min-width: 120px;
+        text-align: right;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+</style>
+{% endblock %}
